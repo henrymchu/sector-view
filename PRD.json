@@ -146,7 +146,7 @@
                   "id INTEGER PRIMARY KEY", 
                   "symbol TEXT NOT NULL (e.g., 'AAPL')",
                   "name TEXT NOT NULL (e.g., 'Apple Inc.')",
-                  "sector_id INTEGER REFERENCES sectors(id)"
+                  "sector_id INTEGER NULL REFERENCES sectors(id) -- Nullable for unclassified stocks"
                 ]
               }
             },
@@ -172,9 +172,15 @@
               "Database file created at correct app data location",
               "Tables created successfully with correct schema",
               "Can insert/select from both tables",
+              "Can insert stocks with NULL sector_id (unclassified stocks)",
               "Connection pool handles multiple queries",
               "Graceful error handling for DB failures"
             ],
+            "handling_null_sectors": {
+              "ui_display": "Show unclassified stocks in separate 'Unclassified' section",
+              "outlier_analysis": "Exclude NULL sector stocks from sector-based outlier detection",
+              "data_loading": "Allow stock imports to succeed even without sector assignment"
+            },
             "future_evolution": [
               "US007: Add market_data table for prices/volume",
               "US008: Add outlier_alerts table for detection results", 

@@ -22,6 +22,12 @@
   margin-bottom: 16px;
 }
 
+.sector-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .sector-name {
   margin: 0 0 4px 0;
   font-size: 18px;
@@ -32,6 +38,50 @@
 .sector-symbol {
   font-size: 14px;
   color: #64748b;
+}
+
+.sector-refresh-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sector-refresh-mini:hover:not(:disabled) {
+  color: #3b82f6;
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.sector-refresh-mini:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sector-refresh-mini:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.mini-refresh-icon {
+  flex-shrink: 0;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .sector-metrics {
@@ -79,6 +129,17 @@
 
   .sector-symbol {
     color: #94a3b8;
+  }
+
+  .sector-refresh-mini {
+    border-color: #475569;
+    color: #64748b;
+  }
+
+  .sector-refresh-mini:hover:not(:disabled) {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
   }
 
   .metric-label {

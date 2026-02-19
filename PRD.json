@@ -1,0 +1,437 @@
+{
+  "product": {
+    "name": "Sector View",
+    "version": "1.0.0",
+    "description": "Desktop application for S&P 500 sector analysis and outlier detection",
+    "target_platform": "macOS",
+    "tech_stack": ["Tauri", "Rust", "React", "TypeScript", "SQLite", "Python"]
+  },
+  "user_personas": [
+    {
+      "name": "Day Trader",
+      "description": "Active trader looking for quick sector outlier opportunities",
+      "goals": ["Find undervalued stocks", "Identify momentum plays", "React to market changes quickly"]
+    },
+    {
+      "name": "Portfolio Manager", 
+      "description": "Professional managing diversified portfolios",
+      "goals": ["Sector rotation strategies", "Risk management", "Performance attribution"]
+    },
+    {
+      "name": "Job Seeker",
+      "description": "Developer showcasing technical skills",
+      "goals": ["Demonstrate full-stack abilities", "Show financial domain knowledge", "Create impressive portfolio piece"]
+    }
+  ],
+  "user_stories": {
+    "epic_1_basic_ui": {
+      "title": "Basic Application Shell",
+      "priority": "P0",
+      "stories": [
+        {
+          "id": "US001",
+          "title": "As a user, I want to launch the desktop app",
+          "description": "Create basic Tauri app that opens a window with React frontend",
+          "acceptance_criteria": [
+            "App launches without errors",
+            "Window is resizable and proper size (1200x800)",
+            "Shows 'Sector View' title",
+            "App icon appears in dock"
+          ],
+          "complexity": "Small",
+          "estimated_hours": 2,
+          "dependencies": [],
+          "status": "Not Started"
+        },
+        {
+          "id": "US002", 
+          "title": "As a user, I want to see a basic sector grid layout",
+          "description": "Create React components for displaying 11 GICS sectors in a grid",
+          "acceptance_criteria": [
+            "3x4 grid layout with 11 sector cards",
+            "Each card shows sector name",
+            "Cards have consistent styling",
+            "Grid is responsive to window resizing"
+          ],
+          "complexity": "Small",
+          "estimated_hours": 3,
+          "dependencies": ["US001"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US003",
+          "title": "As a user, I want a refresh button to update data",
+          "description": "Add refresh functionality to the UI (mock data for now)",
+          "acceptance_criteria": [
+            "Refresh button in top toolbar",
+            "Button shows loading state when pressed",
+            "Mock data changes when refreshed",
+            "Success/error feedback to user"
+          ],
+          "complexity": "Small", 
+          "estimated_hours": 2,
+          "dependencies": ["US002"],
+          "status": "Not Started"
+        }
+      ]
+    },
+    "epic_2_data_layer": {
+      "title": "Data Foundation",
+      "priority": "P0",
+      "stories": [
+        {
+          "id": "US004",
+          "title": "As a developer, I want SQLite database setup",
+          "description": "Create database schema and connection handling",
+          "acceptance_criteria": [
+            "SQLite database file created in app data directory",
+            "All tables created per SPEC.md schema",
+            "Database connection pool established",
+            "Error handling for database failures"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": [],
+          "status": "Not Started"
+        },
+        {
+          "id": "US005",
+          "title": "As a developer, I want to populate initial sector data",
+          "description": "Seed database with 11 GICS sectors and major S&P 500 stocks",
+          "acceptance_criteria": [
+            "All 11 GICS sectors inserted with descriptions",
+            "Top 50 stocks per sector added (~500 total)",
+            "Proper foreign key relationships established",
+            "Data validation rules enforced"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 3,
+          "dependencies": ["US004"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US006",
+          "title": "As a developer, I want Tauri commands for data access",
+          "description": "Create Rust commands that React can call for database operations",
+          "acceptance_criteria": [
+            "get_sectors() command returns all sectors",
+            "get_stocks_by_sector(id) returns stocks for a sector", 
+            "Commands handle errors gracefully",
+            "TypeScript interfaces defined for return types"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US005"],
+          "status": "Not Started"
+        }
+      ]
+    },
+    "epic_3_market_data": {
+      "title": "Real Market Data Integration", 
+      "priority": "P1",
+      "stories": [
+        {
+          "id": "US007",
+          "title": "As a user, I want to see real sector performance data",
+          "description": "Connect to Yahoo Finance API and display actual market data",
+          "acceptance_criteria": [
+            "Yahoo Finance API integration working",
+            "Sector cards show real price change %",
+            "Data updates when refresh is pressed", 
+            "Handles API errors gracefully (shows cached data)"
+          ],
+          "complexity": "Large",
+          "estimated_hours": 8,
+          "dependencies": ["US006"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US008",
+          "title": "As a user, I want to see stock outliers in each sector",
+          "description": "Implement basic outlier detection (>1.5σ from sector average)",
+          "acceptance_criteria": [
+            "Calculate sector averages for price change %",
+            "Identify stocks >1.5 standard deviations from average",
+            "Display outlier count on sector cards",
+            "Color code: green for underperforming, red for outperforming"
+          ],
+          "complexity": "Large",
+          "estimated_hours": 6,
+          "dependencies": ["US007"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US009",
+          "title": "As a user, I want to see detailed outlier list",
+          "description": "Show scrollable list of outlier stocks with details",
+          "acceptance_criteria": [
+            "Scrollable list below sector grid",
+            "Shows stock symbol, name, price change, sector average",
+            "Shows deviation score (σ)",
+            "Click on outlier shows more details"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US008"],
+          "status": "Not Started"
+        }
+      ]
+    },
+    "epic_4_advanced_features": {
+      "title": "Advanced Analytics",
+      "priority": "P1",
+      "stories": [
+        {
+          "id": "US010",
+          "title": "As a user, I want configurable outlier thresholds",
+          "description": "Allow users to adjust sensitivity of outlier detection",
+          "acceptance_criteria": [
+            "Settings panel with threshold slider (1.0σ - 3.0σ)",
+            "Outlier detection updates in real-time as threshold changes",
+            "Settings persist between app sessions",
+            "Visual feedback shows how many outliers at each threshold"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 5,
+          "dependencies": ["US009"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US011",
+          "title": "As a user, I want multiple outlier metrics",
+          "description": "Detect outliers based on volume, P/E ratio, market cap, not just price",
+          "acceptance_criteria": [
+            "Volume outlier detection",
+            "P/E ratio outlier detection", 
+            "Market cap outlier detection",
+            "User can select which metrics to analyze",
+            "Combined outlier score across multiple metrics"
+          ],
+          "complexity": "Large",
+          "estimated_hours": 8,
+          "dependencies": ["US010"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US012",
+          "title": "As a user, I want historical outlier analysis",
+          "description": "See how current outliers performed over past periods",
+          "acceptance_criteria": [
+            "Store historical market data (1 week minimum)",
+            "Show outlier performance over 1d, 3d, 7d periods",
+            "Highlight consistently strong/weak outliers",
+            "Performance attribution vs sector average"
+          ],
+          "complexity": "Large",
+          "estimated_hours": 10,
+          "dependencies": ["US011"],
+          "status": "Not Started"
+        }
+      ]
+    },
+    "epic_5_polish": {
+      "title": "User Experience & Polish",
+      "priority": "P2", 
+      "stories": [
+        {
+          "id": "US013",
+          "title": "As a user, I want the app to look professional",
+          "description": "Improve styling, animations, and visual design",
+          "acceptance_criteria": [
+            "Consistent color scheme and typography",
+            "Smooth animations for data updates",
+            "Professional-looking sector cards with charts",
+            "Dark/light theme support",
+            "Loading states and progress indicators"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 6,
+          "dependencies": ["US009"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US014",
+          "title": "As a user, I want to export outlier data",
+          "description": "Export current outliers to CSV or JSON for further analysis", 
+          "acceptance_criteria": [
+            "Export button in toolbar",
+            "CSV format with all outlier details",
+            "JSON format for programmatic use",
+            "File saved to user's Downloads folder",
+            "Timestamp in filename"
+          ],
+          "complexity": "Small",
+          "estimated_hours": 3,
+          "dependencies": ["US013"],
+          "status": "Not Started"
+        },
+        {
+          "id": "US015",
+          "title": "As a user, I want automatic data refresh",
+          "description": "App automatically refreshes during market hours",
+          "acceptance_criteria": [
+            "Auto-refresh every 15 minutes during market hours (9:30am-4pm ET)",
+            "Pause auto-refresh outside market hours",
+            "User can disable/configure auto-refresh",
+            "Visual indicator shows time until next refresh",
+            "Respect API rate limits"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US013"],
+          "status": "Not Started"
+        }
+      ]
+    }
+  },
+  "technical_tasks": {
+    "infrastructure": [
+      {
+        "id": "TECH001",
+        "title": "Setup Tauri project structure",
+        "description": "Initialize Tauri app with React frontend",
+        "priority": "P0",
+        "complexity": "Small",
+        "estimated_hours": 1,
+        "dependencies": [],
+        "related_stories": ["US001"],
+        "status": "Not Started"
+      },
+      {
+        "id": "TECH002", 
+        "title": "Configure TypeScript and build tools",
+        "description": "Setup TS, linting, formatting, build pipeline",
+        "priority": "P0",
+        "complexity": "Small",
+        "estimated_hours": 2,
+        "dependencies": ["TECH001"],
+        "related_stories": ["US001"],
+        "status": "Not Started"
+      },
+      {
+        "id": "TECH003",
+        "title": "Setup SQLite with migrations",
+        "description": "Database initialization and schema management",
+        "priority": "P0", 
+        "complexity": "Medium",
+        "estimated_hours": 3,
+        "dependencies": ["TECH001"],
+        "related_stories": ["US004"],
+        "status": "Not Started"
+      }
+    ],
+    "data_integration": [
+      {
+        "id": "TECH004",
+        "title": "Yahoo Finance API client",
+        "description": "Rust HTTP client for fetching market data",
+        "priority": "P1",
+        "complexity": "Large",
+        "estimated_hours": 5,
+        "dependencies": ["TECH003"],
+        "related_stories": ["US007"],
+        "status": "Not Started"
+      },
+      {
+        "id": "TECH005",
+        "title": "Statistical analysis module",
+        "description": "Outlier detection algorithms in Rust",
+        "priority": "P1",
+        "complexity": "Large", 
+        "estimated_hours": 6,
+        "dependencies": ["TECH004"],
+        "related_stories": ["US008", "US011"],
+        "status": "Not Started"
+      },
+      {
+        "id": "TECH006",
+        "title": "Data caching and persistence",
+        "description": "Efficient data storage and retrieval strategies",
+        "priority": "P1",
+        "complexity": "Medium",
+        "estimated_hours": 4,
+        "dependencies": ["TECH004"],
+        "related_stories": ["US012"],
+        "status": "Not Started"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "MVP Demo",
+      "target_date": "2025-02-15",
+      "description": "Basic app with sector grid and mock data",
+      "required_stories": ["US001", "US002", "US003"],
+      "status": "Planned"
+    },
+    {
+      "name": "Alpha Release",
+      "target_date": "2025-03-01", 
+      "description": "Working outlier detection with real data",
+      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US009"],
+      "status": "Planned"
+    },
+    {
+      "name": "Beta Release",
+      "target_date": "2025-03-15",
+      "description": "Advanced features and polish",
+      "required_stories": ["US010", "US011", "US013", "US014"],
+      "status": "Planned"
+    },
+    {
+      "name": "Portfolio Ready",
+      "target_date": "2025-03-30",
+      "description": "Production-ready app for job applications",
+      "required_stories": ["US012", "US015"],
+      "status": "Planned"
+    }
+  ],
+  "success_metrics": [
+    {
+      "metric": "App Launch Time",
+      "target": "< 2 seconds",
+      "current": "N/A"
+    },
+    {
+      "metric": "Data Refresh Speed", 
+      "target": "< 10 seconds",
+      "current": "N/A"
+    },
+    {
+      "metric": "Memory Usage",
+      "target": "< 100MB",
+      "current": "N/A"
+    },
+    {
+      "metric": "Bundle Size",
+      "target": "< 15MB", 
+      "current": "N/A"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "API Rate Limits",
+      "impact": "High",
+      "probability": "Medium",
+      "mitigation": "Implement caching, use multiple data sources, respect rate limits"
+    },
+    {
+      "risk": "Market Data Quality",
+      "impact": "Medium", 
+      "probability": "Low",
+      "mitigation": "Data validation, multiple sources, graceful degradation"
+    },
+    {
+      "risk": "Cross-platform Compatibility",
+      "impact": "Low",
+      "probability": "Low", 
+      "mitigation": "Focus on macOS first, Tauri handles most cross-platform issues"
+    }
+  ],
+  "notes": {
+    "last_updated": "2025-01-23",
+    "next_review": "2025-01-30",
+    "team_size": "1 developer + AI assistants",
+    "budget": "Free tier APIs, $0 budget constraint"
+  }
+}

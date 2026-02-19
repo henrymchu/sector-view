@@ -49,32 +49,42 @@ async fn run_migrations(pool: &SqlitePool) -> Result<(), String> {
     .await
     .map_err(|e| format!("Failed to create migrations table: {e}"))?;
 
-    // Check if 001_initial has been applied
-    let applied: bool =
-        sqlx::query_scalar("SELECT COUNT(*) > 0 FROM _migrations WHERE name = '001_initial'")
-            .fetch_one(pool)
-            .await
-            .map_err(|e| format!("Failed to check migrations: {e}"))?;
+    let migrations: &[(&str, &str)] = &[
+        ("001_initial", include_str!("../migrations/001_initial.sql")),
+        (
+            "002_seed_stocks",
+            include_str!("../migrations/002_seed_stocks.sql"),
+        ),
+    ];
 
-    if !applied {
-        let migration_sql = include_str!("../migrations/001_initial.sql");
-        // Execute each statement separately
-        for statement in migration_sql.split(';') {
-            let trimmed = statement.trim();
-            if !trimmed.is_empty() {
-                sqlx::query(trimmed)
-                    .execute(pool)
-                    .await
-                    .map_err(|e| format!("Migration 001_initial failed: {e}"))?;
+    for (name, sql) in migrations {
+        let applied: bool = sqlx::query_scalar(
+            "SELECT COUNT(*) > 0 FROM _migrations WHERE name = ?",
+        )
+        .bind(name)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| format!("Failed to check migration {name}: {e}"))?;
+
+        if !applied {
+            for statement in sql.split(';') {
+                let trimmed = statement.trim();
+                if !trimmed.is_empty() {
+                    sqlx::query(trimmed)
+                        .execute(pool)
+                        .await
+                        .map_err(|e| format!("Migration {name} failed: {e}"))?;
+                }
             }
+
+            sqlx::query("INSERT INTO _migrations (name) VALUES (?)")
+                .bind(name)
+                .execute(pool)
+                .await
+                .map_err(|e| format!("Failed to record migration {name}: {e}"))?;
+
+            println!("Applied migration: {name}");
         }
-
-        sqlx::query("INSERT INTO _migrations (name) VALUES ('001_initial')")
-            .execute(pool)
-            .await
-            .map_err(|e| format!("Failed to record migration: {e}"))?;
-
-        println!("Applied migration: 001_initial");
     }
 
     Ok(())

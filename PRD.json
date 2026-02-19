@@ -317,8 +317,8 @@
           "acceptance_criteria": [
             "Refresh button in top toolbar with icon and text",
             "Button shows loading state when pressed (spinner + disabled)",
-            "Data refreshes when clicked (initially mock data, real data in US007)",
-            "Success/error feedback to user via toast or status message",
+            "Refreshes both existing stock data AND checks for new stocks",
+            "Success/error feedback shows what was updated (data + new stocks found)",
             "Prevents multiple simultaneous refreshes"
           ],
           "complexity": "Small", 
@@ -332,11 +332,42 @@
               "loading_state": "Spinner icon replaces refresh icon, button disabled and shows 'Refreshing...'",
               "feedback": "Toast notification or status bar message for success/error"
             },
+            "dual_refresh_strategy": {
+              "existing_stocks": {
+                "purpose": "Update prices, P/E ratios, market caps for known stocks",
+                "data_updated": "All market_data table entries get fresh values",
+                "user_feedback": "Shows 'Updated 55 stocks' in success message"
+              },
+              "stock_discovery": {
+                "purpose": "Find new S&P 500 additions, sector changes, newly public companies",
+                "why_needed": [
+                  "S&P 500 composition changes quarterly",
+                  "Companies can switch sectors (e.g., Tesla moved from Consumer Discretionary to Consumer Staples briefly)",
+                  "New IPOs may enter major indices",
+                  "Mergers/acquisitions affect stock universe"
+                ],
+                "implementation_approach": [
+                  "Fetch current S&P 500 component list from reliable source",
+                  "Compare against existing stocks table",
+                  "Add new stocks with proper sector classification",
+                  "Mark removed/delisted stocks (don't delete - keep historical data)"
+                ],
+                "user_feedback": "Shows 'Found 3 new stocks' or 'No new stocks found' in success message"
+              },
+              "combined_refresh_flow": [
+                "1. Start refresh (show loading state)",
+                "2. Update existing stock data (market prices, metrics)",
+                "3. Check for new stocks in S&P 500",
+                "4. Add newly discovered stocks to database",  
+                "5. Update UI with refreshed data + new stocks",
+                "6. Show combined success message: 'Updated 55 stocks, found 2 new stocks'"
+              ]
+            },
             "user_control_philosophy": {
               "manual_over_automatic": "User decides when to refresh rather than automatic intervals",
               "benefits": [
                 "Respects API rate limits (user won't spam refresh)",
-                "Saves battery/resources",
+                "Saves battery/resources", 
                 "User controls when they see new data",
                 "No surprise data changes during analysis"
               ],
@@ -416,9 +447,10 @@
               "visual_feedback": "Show different placeholder values, updated timestamps, or subtle animation"
             },
             "integration_with_future_stories": {
-              "us007_connection": "Refresh button will call market data refresh functions",
-              "refresh_context": "Pass refresh trigger down to SectorGrid component",
-              "data_invalidation": "Clear cached data and fetch fresh from API"
+              "us005_expansion": "Stock discovery adds new entries to seed data automatically",
+              "us007_connection": "Refresh button will call market data refresh functions for both existing and new stocks",
+              "refresh_context": "Pass refresh trigger down to SectorGrid component to re-render with new stocks",
+              "data_invalidation": "Clear cached data and fetch fresh from API for all stocks (existing + newly discovered)"
             },
             "css_styling": {
               "src/styles/Header.css": {
@@ -504,10 +536,12 @@
               "Refresh button appears in top toolbar with proper styling",
               "Button shows loading state when clicked (spinner + disabled)",
               "Mock data changes visually after refresh completes",
-              "Success message shows after successful refresh", 
+              "Success message shows what was updated: 'Updated X stocks, found Y new stocks'", 
               "Error message shows if refresh fails (simulate network error)",
               "Double-clicking doesn't trigger multiple refreshes",
               "Last refresh timestamp updates correctly",
+              "New stocks appear in sector grid after discovery refresh",
+              "Existing stocks show updated data (different mock values)",
               "Button returns to normal state after refresh completes"
             ]
           }

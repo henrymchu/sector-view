@@ -41,7 +41,46 @@
           "complexity": "Small",
           "estimated_hours": 2,
           "dependencies": [],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "setup_commands": [
+              "cd /Users/collettemilton/code/sector-view",
+              "npm create tauri-app@latest .",
+              "Choose: React + TypeScript template",
+              "Configure app name: 'Sector View'"
+            ],
+            "key_files": {
+              "src-tauri/tauri.conf.json": {
+                "description": "Configure window settings and app metadata",
+                "key_changes": [
+                  "Set productName to 'Sector View'",
+                  "Set window title to 'Sector View'", 
+                  "Set window dimensions: 1200x800",
+                  "Set minWidth: 800, minHeight: 600"
+                ]
+              },
+              "src/App.tsx": {
+                "description": "Basic React component showing app title",
+                "key_changes": [
+                  "Replace default content with 'Sector View' heading",
+                  "Add basic CSS styling for clean appearance"
+                ]
+              }
+            },
+            "testing_commands": [
+              "npm run tauri dev - launch in development mode",
+              "npm run tauri build - create production bundle",
+              "Verify bundle size < 15MB"
+            ],
+            "validation_steps": [
+              "App launches without console errors",
+              "Window opens at 1200x800 dimensions",
+              "Window is resizable with proper min dimensions",
+              "Title bar displays 'Sector View'",
+              "App icon appears in macOS dock",
+              "UI shows clean, minimal interface ready for next story"
+            ]
+          }
         },
         {
           "id": "US002", 

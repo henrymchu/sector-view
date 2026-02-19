@@ -966,18 +966,172 @@
         },
         {
           "id": "US008",
-          "title": "As a user, I want to see stock outliers in each sector",
-          "description": "Implement basic outlier detection (>1.5σ from sector average)",
+          "title": "As a user, I want to see multi-dimensional stock outliers in each sector",
+          "description": "Implement sophisticated outlier detection across multiple financial metrics with composite scoring",
           "acceptance_criteria": [
-            "Calculate sector averages for price change %",
-            "Identify stocks >1.5 standard deviations from average",
-            "Display outlier count on sector cards",
-            "Color code: green for underperforming, red for outperforming"
+            "Calculate sector standard deviations for P/E ratios, P/B ratios, and price changes",
+            "Identify stocks >1.5σ from sector average on any metric", 
+            "Generate composite outlier score combining multiple metrics",
+            "Display outlier count and severity on sector cards",
+            "Color code: green for undervalued outliers, red for overvalued outliers",
+            "Handle missing data gracefully (not all stocks have P/E ratios)"
           ],
           "complexity": "Large",
-          "estimated_hours": 6,
+          "estimated_hours": 8,
           "dependencies": ["US007"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "statistical_methodology": {
+              "z_score_calculation": {
+                "formula": "z = (value - mean) / standard_deviation",
+                "interpretation": [
+                  "z > +1.5: Stock significantly above sector average",
+                  "z < -1.5: Stock significantly below sector average", 
+                  "z between -1.5 and +1.5: Within normal range"
+                ],
+                "threshold_configurable": "Default 1.5σ, but user can adjust in settings"
+              },
+              "metrics_analyzed": {
+                "price_performance": {
+                  "metric": "price_change_percent",
+                  "interpretation": "High +z = outperforming sector, Low -z = underperforming sector"
+                },
+                "valuation_pe": {
+                  "metric": "pe_ratio", 
+                  "interpretation": "High +z = expensive vs sector, Low -z = cheap vs sector",
+                  "null_handling": "Skip stocks with NULL P/E (unprofitable companies)"
+                },
+                "valuation_pb": {
+                  "metric": "pb_ratio",
+                  "interpretation": "High +z = trading above book value vs sector, Low -z = trading below book value"
+                },
+                "trading_activity": {
+                  "metric": "volume / avg_volume_10d",
+                  "interpretation": "High +z = unusual trading volume vs typical"
+                },
+                "volatility": {
+                  "metric": "beta",
+                  "interpretation": "High +z = more volatile than sector average"
+                }
+              }
+            },
+            "composite_scoring": {
+              "weighted_approach": {
+                "description": "Combine multiple Z-scores into single outlier strength score",
+                "formula": "composite_score = sqrt(z_pe² + z_pb² + z_price² + z_volume²) / num_valid_metrics",
+                "weights": {
+                  "pe_ratio": 0.3,
+                  "pb_ratio": 0.2, 
+                  "price_change": 0.3,
+                  "volume_ratio": 0.2
+                },
+                "interpretation": [
+                  "Score 0-1: Normal stock, within sector norms",
+                  "Score 1-2: Moderate outlier, worth noting",
+                  "Score 2-3: Strong outlier, significant deviation", 
+                  "Score 3+: Extreme outlier, investigate immediately"
+                ]
+              },
+              "direction_classification": {
+                "undervalued_outlier": "Low P/E + Low P/B + (any price performance)",
+                "overvalued_outlier": "High P/E + High P/B + (any price performance)",
+                "momentum_outlier": "Strong price performance + high volume",
+                "value_trap": "Low P/E + Poor price performance",
+                "growth_premium": "High P/E + Strong price performance"
+              }
+            },
+            "rust_implementation": {
+              "src-tauri/src/outlier_detection.rs": {
+                "description": "Statistical analysis engine in Rust for performance",
+                "key_functions": [
+                  "calculate_sector_statistics(sector_id: i32) -> SectorStats",
+                  "calculate_z_scores(stock: &Stock, sector_stats: &SectorStats) -> ZScores", 
+                  "calculate_composite_score(z_scores: &ZScores) -> f64",
+                  "classify_outlier_type(z_scores: &ZScores) -> OutlierType",
+                  "find_sector_outliers(sector_id: i32, threshold: f64) -> Vec<OutlierStock>"
+                ],
+                "example_struct": [
+                  "#[derive(Debug, Serialize, Deserialize)]",
+                  "pub struct SectorStats {",
+                  "    pub sector_id: i32,",
+                  "    pub stock_count: u32,",
+                  "    pub pe_mean: Option<f64>,",
+                  "    pub pe_std_dev: Option<f64>,",
+                  "    pub pb_mean: Option<f64>, ",
+                  "    pub pb_std_dev: Option<f64>,",
+                  "    pub price_change_mean: f64,",
+                  "    pub price_change_std_dev: f64,",
+                  "    pub volume_ratio_mean: f64,",
+                  "    pub volume_ratio_std_dev: f64,",
+                  "}",
+                  "",
+                  "#[derive(Debug, Serialize, Deserialize)]",
+                  "pub struct ZScores {",
+                  "    pub pe_z: Option<f64>,",
+                  "    pub pb_z: Option<f64>,", 
+                  "    pub price_z: f64,",
+                  "    pub volume_z: f64,",
+                  "}",
+                  "",
+                  "#[derive(Debug, Serialize, Deserialize)]",
+                  "pub struct OutlierStock {",
+                  "    pub stock_id: i32,",
+                  "    pub symbol: String,",
+                  "    pub name: String,",
+                  "    pub z_scores: ZScores,",
+                  "    pub composite_score: f64,",
+                  "    pub outlier_type: OutlierType,",
+                  "    pub significance_level: SignificanceLevel, // Moderate, Strong, Extreme",
+                  "}"
+                ]
+              }
+            },
+            "algorithm_implementation": {
+              "step_by_step_process": [
+                "1. For each sector, gather all stocks with valid market data",
+                "2. Calculate sector averages and standard deviations for each metric",
+                "3. For each stock, calculate Z-scores vs its sector", 
+                "4. Compute composite outlier score from individual Z-scores",
+                "5. Classify outlier type (undervalued, overvalued, momentum, etc.)",
+                "6. Filter stocks above threshold (default 1.5σ composite score)",
+                "7. Sort by composite score (strongest outliers first)",
+                "8. Return ranked list of outlier stocks per sector"
+              ],
+              "null_data_handling": [
+                "P/E ratio: Skip unprofitable companies (NULL P/E)",
+                "P/B ratio: Use median substitution if < 20% missing",
+                "Volume: Always available from market data",
+                "Composite score: Only use available metrics, adjust denominator"
+              ]
+            },
+            "performance_optimizations": {
+              "caching_strategy": "Cache sector statistics (recalculate only on data refresh)",
+              "batch_processing": "Calculate all sectors in single database query",
+              "indexing": "Ensure market_data table has sector_id index",
+              "concurrent_processing": "Use Rust async/await for parallel sector analysis"
+            },
+            "integration_with_ui": {
+              "sector_card_updates": [
+                "Show outlier count: '8 outliers found'",
+                "Show strongest outlier: 'AAPL: 2.8σ composite'",
+                "Color coding based on predominant outlier type"
+              ],
+              "tauri_commands": [
+                "#[tauri::command]",
+                "pub async fn detect_outliers(threshold: f64) -> Result<Vec<SectorOutliers>, String>",
+                "",
+                "#[tauri::command]", 
+                "pub async fn get_sector_outliers(sector_id: i32) -> Result<Vec<OutlierStock>, String>"
+              ]
+            },
+            "validation_and_testing": [
+              "Create test cases with known outliers (e.g., stock with P/E 3x sector average)",
+              "Verify Z-score calculations match manual calculations", 
+              "Test edge cases: all stocks similar (low std dev), missing data",
+              "Performance test: 500 stocks across 11 sectors should complete < 1 second",
+              "Validate composite scores make intuitive sense"
+            ]
+          }
         },
         {
           "id": "US009",

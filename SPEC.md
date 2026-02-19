@@ -7,7 +7,7 @@ A macOS desktop application for analyzing S&P 500 sectors and identifying stocks
 ## Core Features
 
 ### 1. Sector Dashboard
-- Display all 11 GICS sectors with key metrics:
+- Display all 11 GICS (Global Industry Classification Standard) sectors with key metrics:
   - Sector average price change (day/week/month)
   - Volume weighted averages
   - P/E ratio ranges
@@ -80,7 +80,7 @@ data_service/
 - Fundamental data (P/E, etc.)
 
 ### Market Structure
-- **11 GICS Sectors**: Technology, Healthcare, Financials, Consumer Discretionary, Communication Services, Industrials, Consumer Staples, Energy, Utilities, Real Estate, Materials
+- **11 GICS (Global Industry Classification Standard) Sectors**: Technology, Healthcare, Financials, Consumer Discretionary, Communication Services, Industrials, Consumer Staples, Energy, Utilities, Real Estate, Materials
 - **~500 stocks** from S&P 500 index
 
 ## Database Schema (SQLite)

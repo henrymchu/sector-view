@@ -1110,18 +1110,75 @@
               "indexing": "Ensure market_data table has sector_id index",
               "concurrent_processing": "Use Rust async/await for parallel sector analysis"
             },
+            "historical_database_schema": {
+              "outlier_detections": {
+                "description": "Store historical outlier detection results by date for trend analysis",
+                "table_schema": [
+                  "CREATE TABLE outlier_detections (",
+                  "  id INTEGER PRIMARY KEY,",
+                  "  stock_id INTEGER NOT NULL REFERENCES stocks(id),",
+                  "  sector_id INTEGER NOT NULL REFERENCES sectors(id),",
+                  "  detection_date DATE NOT NULL,",
+                  "  detection_timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,",
+                  "  -- Z-Scores --",
+                  "  pe_z_score REAL,",
+                  "  pb_z_score REAL,",
+                  "  price_z_score REAL NOT NULL,",
+                  "  volume_z_score REAL NOT NULL,",
+                  "  -- Composite Analysis --",
+                  "  composite_score REAL NOT NULL,",
+                  "  outlier_type TEXT NOT NULL, -- 'undervalued', 'overvalued', 'momentum', etc.",
+                  "  significance_level TEXT NOT NULL, -- 'moderate', 'strong', 'extreme'",
+                  "  threshold_used REAL NOT NULL, -- Which sigma threshold was used",
+                  "  INDEX idx_outlier_stock_date (stock_id, detection_date),",
+                  "  INDEX idx_outlier_sector_date (sector_id, detection_date),",
+                  "  INDEX idx_outlier_date (detection_date)",
+                  ");"
+                ],
+                "data_retention_strategy": [
+                  "Store daily outlier detection results",
+                  "Keep detailed results for last 90 days",
+                  "Aggregate to weekly summaries for 90d-1year",
+                  "Monthly summaries for historical data >1 year"
+                ]
+              },
+              "sector_statistics_cache": {
+                "description": "Cache sector stats by date to avoid recalculation",
+                "table_schema": [
+                  "CREATE TABLE sector_stats_daily (",
+                  "  id INTEGER PRIMARY KEY,",
+                  "  sector_id INTEGER NOT NULL REFERENCES sectors(id),",
+                  "  stats_date DATE NOT NULL,",
+                  "  stock_count INTEGER NOT NULL,",
+                  "  pe_mean REAL,",
+                  "  pe_std_dev REAL,", 
+                  "  pb_mean REAL,",
+                  "  pb_std_dev REAL,",
+                  "  price_change_mean REAL NOT NULL,",
+                  "  price_change_std_dev REAL NOT NULL,",
+                  "  volume_ratio_mean REAL NOT NULL,",
+                  "  volume_ratio_std_dev REAL NOT NULL,",
+                  "  UNIQUE(sector_id, stats_date)",
+                  ");"
+                ]
+              }
+            },
             "integration_with_ui": {
               "sector_card_updates": [
-                "Show outlier count: '8 outliers found'",
+                "Show current outlier count: '8 outliers found'",
                 "Show strongest outlier: 'AAPL: 2.8σ composite'",
-                "Color coding based on predominant outlier type"
+                "Color coding based on predominant outlier type",
+                "Trend indicator: '↗ +2 new outliers vs yesterday'"
               ],
               "tauri_commands": [
                 "#[tauri::command]",
                 "pub async fn detect_outliers(threshold: f64) -> Result<Vec<SectorOutliers>, String>",
                 "",
                 "#[tauri::command]", 
-                "pub async fn get_sector_outliers(sector_id: i32) -> Result<Vec<OutlierStock>, String>"
+                "pub async fn get_sector_outliers(sector_id: i32) -> Result<Vec<OutlierStock>, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn get_outlier_history(stock_id: i32, days: i32) -> Result<Vec<OutlierDetection>, String>"
               ]
             },
             "validation_and_testing": [
@@ -1253,6 +1310,90 @@
           "estimated_hours": 4,
           "dependencies": ["US013"],
           "status": "Not Started"
+        },
+        {
+          "id": "US016",
+          "title": "As a user, I want to manage historical data storage",
+          "description": "Control database size by cleaning up old outlier detection data",
+          "acceptance_criteria": [
+            "Settings panel shows current database size and record counts",
+            "User can set data retention policy (30d, 90d, 1yr, unlimited)",
+            "Manual 'Clean Old Data' button to free up space immediately",
+            "Automatic cleanup based on retention policy",
+            "Preserve summary statistics while removing detailed records",
+            "Warning before deleting historical data"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 5,
+          "dependencies": ["US008"],
+          "status": "Not Started",
+          "implementation_details": {
+            "data_lifecycle_strategy": {
+              "retention_tiers": {
+                "detailed_data": "Keep full outlier_detections records for user-selected period (default 90 days)",
+                "summary_data": "Aggregate to weekly/monthly summaries for longer-term trends",
+                "market_data": "Keep latest snapshot + historical price changes (configurable retention)"
+              },
+              "cleanup_operations": [
+                "DELETE FROM outlier_detections WHERE detection_date < (CURRENT_DATE - retention_days)",
+                "DELETE FROM market_data WHERE timestamp < (CURRENT_TIMESTAMP - retention_days * 24 * 60 * 60)",
+                "VACUUM database to reclaim disk space after cleanup"
+              ]
+            },
+            "user_interface": {
+              "settings_panel_section": {
+                "database_overview": [
+                  "Current database size: 15.3 MB",
+                  "Outlier records: 12,450 (last 90 days)",
+                  "Market data records: 8,200 (last 30 days)",
+                  "Oldest data: March 15, 2025"
+                ],
+                "retention_settings": [
+                  "Data retention period: [30d] [90d] [1yr] [Unlimited]",
+                  "Auto-cleanup enabled: [✓]",
+                  "Cleanup frequency: [Daily] [Weekly] [Monthly]"
+                ],
+                "manual_controls": [
+                  "[Clean Old Data Now] button with confirmation dialog",
+                  "[Export Historical Data] before cleanup",
+                  "[Reset All Data] nuclear option with multiple confirmations"
+                ]
+              }
+            },
+            "smart_cleanup_logic": {
+              "preserve_significant_outliers": "Keep records of extreme outliers (3σ+) longer than moderate ones",
+              "summarization_before_delete": [
+                "Create monthly summary: sector, avg_outlier_count, strongest_outlier_score",
+                "Store trend data: outlier_counts_over_time for charts"
+              ],
+              "gradual_degradation": [
+                "0-30 days: Keep all detailed records",
+                "30-90 days: Keep daily summaries", 
+                "90d-1yr: Keep weekly summaries",
+                "1yr+: Keep monthly summaries only"
+              ]
+            },
+            "database_monitoring": {
+              "size_tracking": "Monitor database file size and warn at configurable thresholds",
+              "performance_impact": "Show query performance degradation as data grows",
+              "storage_breakdown": "Show space used by each table type"
+            },
+            "export_before_cleanup": {
+              "csv_export": "Export outlier history to CSV before deletion",
+              "json_export": "Export full data structure for backup/analysis", 
+              "selective_export": "User can choose date ranges and specific stocks"
+            },
+            "validation_steps": [
+              "Settings panel shows accurate database size and record counts",
+              "Data retention settings persist between app sessions",
+              "Manual cleanup removes correct data based on retention policy",
+              "Auto-cleanup runs on schedule without user intervention",
+              "Database size decreases after cleanup operation",
+              "Export functionality works before cleanup",
+              "Confirmation dialogs prevent accidental data loss",
+              "Summary statistics preserved even after detailed data cleanup"
+            ]
+          }
         }
       ]
     }
@@ -1355,7 +1496,7 @@
       "name": "Portfolio Ready",
       "target_date": "2025-03-30",
       "description": "Production-ready app for job applications",
-      "required_stories": ["US012", "US015"],
+      "required_stories": ["US012", "US015", "US016"],
       "status": "Planned"
     }
   ],

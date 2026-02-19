@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import Header from "./components/Header";
 import SectorGrid from "./components/SectorGrid";
 import OutlierDashboard from "./components/OutlierDashboard";
 import Toast, { type ToastMessage } from "./components/Toast";
@@ -141,12 +140,6 @@ function App() {
 
   return (
     <>
-      <Header
-        refreshing={anyRefreshing}
-        lastRefresh={lastRefresh}
-        onRefresh={handleGlobalRefresh}
-        progress={progress}
-      />
       <main className="container">
         <SectorGrid
           sectors={sectors}
@@ -154,6 +147,10 @@ function App() {
           refreshingSectors={refreshingSectors}
           anyRefreshing={anyRefreshing}
           onSectorRefresh={handleSectorRefresh}
+          refreshing={anyRefreshing}
+          lastRefresh={lastRefresh}
+          onRefresh={handleGlobalRefresh}
+          progress={progress}
         />
         <OutlierDashboard outliersBySector={outliersBySector} />
       </main>

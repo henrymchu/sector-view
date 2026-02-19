@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Sector View",
+  "productName": "GICS Intelligence",
   "version": "0.1.0",
   "identifier": "com.sectorview.desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Sector View",
+        "title": "GICS Intelligence",
         "width": 1200,
         "height": 800,
         "minWidth": 800,

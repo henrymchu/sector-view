@@ -1,0 +1,95 @@
+.sector-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sector-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.sector-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.sector-header {
+  margin-bottom: 16px;
+}
+
+.sector-name {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sector-symbol {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.sector-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.metric-value.placeholder {
+  color: #d1d5db;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sector-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .sector-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: #3b82f6;
+  }
+
+  .sector-name {
+    color: #f1f5f9;
+  }
+
+  .sector-symbol {
+    color: #94a3b8;
+  }
+
+  .metric-label {
+    color: #64748b;
+  }
+
+  .metric-value {
+    color: #f1f5f9;
+  }
+
+  .metric-value.placeholder {
+    color: #475569;
+  }
+}

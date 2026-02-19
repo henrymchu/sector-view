@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Header from "./components/Header";
 import SectorGrid from "./components/SectorGrid";
+import OutlierDashboard from "./components/OutlierDashboard";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { useDatabase } from "./hooks/useDatabase";
 import type { SectorSummary, SectorOutliers } from "./types/database";
@@ -127,6 +128,7 @@ function App() {
           anyRefreshing={anyRefreshing}
           onSectorRefresh={handleSectorRefresh}
         />
+        <OutlierDashboard outliersBySector={outliersBySector} />
       </main>
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </>

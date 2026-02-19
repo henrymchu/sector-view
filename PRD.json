@@ -257,12 +257,77 @@
             "get_sectors() command returns all sectors",
             "get_stocks_by_sector(id) returns stocks for a sector", 
             "Commands handle errors gracefully",
-            "TypeScript interfaces defined for return types"
+            "TypeScript interfaces defined for return types",
+            "React components can successfully call Rust functions"
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
           "dependencies": ["US005"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "tauri_concepts": {
+              "what_are_commands": "Tauri commands are Rust functions that React can call like API endpoints. They're the bridge between your frontend and backend.",
+              "how_it_works": [
+                "1. Write Rust function with #[tauri::command] annotation",
+                "2. Register command in main.rs",
+                "3. Call from React using invoke() function",
+                "4. Data flows: React -> Tauri -> Rust -> Database -> Rust -> Tauri -> React"
+              ],
+              "beginner_friendly": "Don't worry about complex Rust concepts yet - focus on the patterns and copy-paste approach"
+            },
+            "step_by_step": {
+              "1_create_types": {
+                "file": "src-tauri/src/types.rs",
+                "purpose": "Define data structures shared between Rust and React",
+                "code": "use serde::{Deserialize, Serialize};\n\n#[derive(Debug, Serialize, Deserialize)]\npub struct Sector {\n    pub id: i32,\n    pub name: String,\n    pub symbol: String,\n}\n\n#[derive(Debug, Serialize, Deserialize)]\npub struct Stock {\n    pub id: i32,\n    pub symbol: String,\n    pub name: String,\n    pub sector_id: Option<i32>,\n}"
+              },
+              "2_create_commands": {
+                "file": "src-tauri/src/commands.rs", 
+                "purpose": "Write the actual functions React can call",
+                "code": "use crate::{database::get_connection, types::{Sector, Stock}};\n\n#[tauri::command]\npub async fn get_sectors() -> Result<Vec<Sector>, String> {\n    let pool = get_connection().map_err(|e| e.to_string())?;\n    \n    let rows = sqlx::query!(\"SELECT id, name, symbol FROM sectors\")\n        .fetch_all(&pool)\n        .await\n        .map_err(|e| format!(\"Database error: {}\", e))?;\n    \n    let sectors = rows.into_iter().map(|row| Sector {\n        id: row.id,\n        name: row.name,\n        symbol: row.symbol,\n    }).collect();\n    \n    Ok(sectors)\n}\n\n#[tauri::command]\npub async fn get_stocks_by_sector(sector_id: i32) -> Result<Vec<Stock>, String> {\n    let pool = get_connection().map_err(|e| e.to_string())?;\n    \n    let rows = sqlx::query!(\"SELECT id, symbol, name, sector_id FROM stocks WHERE sector_id = ?\", sector_id)\n        .fetch_all(&pool)\n        .await\n        .map_err(|e| format!(\"Database error: {}\", e))?;\n    \n    let stocks = rows.into_iter().map(|row| Stock {\n        id: row.id,\n        symbol: row.symbol,\n        name: row.name,\n        sector_id: row.sector_id,\n    }).collect();\n    \n    Ok(stocks)\n}"
+              },
+              "3_register_commands": {
+                "file": "src-tauri/src/main.rs",
+                "purpose": "Tell Tauri about your commands",
+                "changes": "Add: mod commands;\nmod types;\n\nIn .invoke_handler(): commands::get_sectors, commands::get_stocks_by_sector"
+              },
+              "4_react_types": {
+                "file": "src/types/database.ts",
+                "purpose": "TypeScript interfaces matching Rust structs",
+                "code": "export interface Sector {\n  id: number;\n  name: string;\n  symbol: string;\n}\n\nexport interface Stock {\n  id: number;\n  symbol: string;\n  name: string;\n  sector_id: number | null;\n}"
+              },
+              "5_react_hook": {
+                "file": "src/hooks/useDatabase.ts", 
+                "purpose": "Easy way to call Rust from React components",
+                "code": "import { invoke } from '@tauri-apps/api/tauri';\nimport { Sector, Stock } from '../types/database';\n\nexport const useDatabase = () => {\n  const getSectors = async (): Promise<Sector[]> => {\n    try {\n      return await invoke<Sector[]>('get_sectors');\n    } catch (error) {\n      console.error('Failed to get sectors:', error);\n      throw error;\n    }\n  };\n\n  const getStocksBySector = async (sectorId: number): Promise<Stock[]> => {\n    try {\n      return await invoke<Stock[]>('get_stocks_by_sector', { sectorId });\n    } catch (error) {\n      console.error('Failed to get stocks:', error);\n      throw error;\n    }\n  };\n\n  return { getSectors, getStocksBySector };\n};"
+              }
+            },
+            "rust_for_beginners": {
+              "key_concepts": {
+                "Result<T, E>": "Rust's way of handling success (T) or error (E)",
+                "#[tauri::command]": "Annotation that makes Rust function callable from React",
+                "async/await": "Non-blocking operations for database calls",
+                "map_err()": "Convert different error types to String for Tauri",
+                "Option<T>": "Rust's way of saying 'this might be null'"
+              },
+              "copy_paste_approach": "Don't worry about understanding every Rust detail - focus on the patterns and modify as needed"
+            },
+            "testing_strategy": [
+              "1. Start with get_sectors() - no parameters, easier to test",
+              "2. Test in browser console: await window.__TAURI__.invoke('get_sectors')",
+              "3. Add get_stocks_by_sector() once first command works", 
+              "4. Create React components that use the hooks",
+              "5. Add error handling and loading states"
+            ],
+            "validation_steps": [
+              "Can call get_sectors() from React browser console",
+              "Returns array of 11 sectors with correct structure",
+              "Can call get_stocks_by_sector(1) and get stocks for sector 1",
+              "TypeScript types prevent errors (no red squiggles)", 
+              "Error handling works (try invalid sector ID)",
+              "React components can use the database hooks successfully"
+            ]
+          }
         }
       ]
     },

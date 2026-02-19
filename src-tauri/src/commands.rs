@@ -80,7 +80,11 @@ pub async fn refresh_market_data(
         }
     };
 
-    // Step 2: Fetch market data for ALL stocks (including any newly discovered)
+    // Step 2: Authenticate with Yahoo Finance for fundamentals data
+    let session = market_data::YahooSession::new().await
+        .map_err(|e| format!("Yahoo Finance auth failed: {e}"))?;
+
+    // Step 3: Fetch market data for ALL stocks (including any newly discovered)
     let stocks = sqlx::query_as::<_, Stock>(
         "SELECT id, symbol, name, sector_id FROM stocks WHERE sector_id IS NOT NULL ORDER BY symbol",
     )
@@ -99,7 +103,7 @@ pub async fn refresh_market_data(
             phase: "market-data".to_string(),
         });
 
-        match market_data::fetch_stock_quote(&client, stock.id, &stock.symbol).await {
+        match market_data::fetch_stock_quote(&client, &session, stock.id, &stock.symbol).await {
             Ok(quote) => {
                 if let Err(e) = market_data::save_quote(&db.0, &quote).await {
                     eprintln!("Failed to save {}: {e}", stock.symbol);
@@ -138,6 +142,8 @@ pub async fn refresh_sector_data(
     cache: State<'_, SectorCache>,
 ) -> Result<Vec<SectorSummary>, String> {
     let client = Client::new();
+    let session = market_data::YahooSession::new().await
+        .map_err(|e| format!("Yahoo Finance auth failed: {e}"))?;
 
     // Get stocks for this sector only
     let stocks = sqlx::query_as::<_, Stock>(
@@ -161,7 +167,7 @@ pub async fn refresh_sector_data(
             phase: "market-data".to_string(),
         });
 
-        match market_data::fetch_stock_quote(&client, stock.id, &stock.symbol).await {
+        match market_data::fetch_stock_quote(&client, &session, stock.id, &stock.symbol).await {
             Ok(quote) => {
                 if market_data::save_quote(&db.0, &quote).await.is_ok() {
                     success_count += 1;

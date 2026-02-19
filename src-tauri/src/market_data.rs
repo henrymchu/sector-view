@@ -77,6 +77,49 @@ struct YahooValue {
     raw: Option<f64>,
 }
 
+const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+/// Authenticated Yahoo Finance session with cookie jar + crumb.
+/// Created once per refresh cycle and reused for all quoteSummary calls.
+pub struct YahooSession {
+    client: Client,
+    crumb: String,
+}
+
+impl YahooSession {
+    /// Establish a Yahoo Finance session by fetching a cookie + crumb pair.
+    pub async fn new() -> Result<Self, String> {
+        let client = Client::builder()
+            .cookie_store(true)
+            .user_agent(USER_AGENT)
+            .build()
+            .map_err(|e| format!("Failed to build Yahoo session client: {e}"))?;
+
+        // Step 1: Hit fc.yahoo.com to get session cookies
+        client
+            .get("https://fc.yahoo.com")
+            .send()
+            .await
+            .map_err(|e| format!("Failed to init Yahoo session: {e}"))?;
+
+        // Step 2: Fetch crumb using the session cookies
+        let crumb = client
+            .get("https://query2.finance.yahoo.com/v1/test/getcrumb")
+            .send()
+            .await
+            .map_err(|e| format!("Failed to fetch Yahoo crumb: {e}"))?
+            .text()
+            .await
+            .map_err(|e| format!("Failed to read Yahoo crumb: {e}"))?;
+
+        if crumb.contains("Unauthorized") || crumb.contains("Too Many") {
+            return Err(format!("Yahoo crumb fetch rejected: {crumb}"));
+        }
+
+        Ok(Self { client, crumb })
+    }
+}
+
 /// Combined stock quote with all metrics
 #[derive(Debug)]
 pub struct StockQuote {
@@ -108,7 +151,7 @@ async fn fetch_chart_data(
 
     let resp = client
         .get(&url)
-        .header("User-Agent", "Mozilla/5.0")
+        .header("User-Agent", USER_AGENT)
         .send()
         .await
         .map_err(|e| format!("Network error fetching {symbol}: {e}"))?;
@@ -143,7 +186,7 @@ async fn fetch_chart_data(
 
 /// Fetch fundamental data from Yahoo Finance quoteSummary API.
 async fn fetch_fundamentals(
-    client: &Client,
+    session: &YahooSession,
     symbol: &str,
 ) -> (
     Option<f64>,
@@ -157,13 +200,12 @@ async fn fetch_fundamentals(
     Option<f64>,
 ) {
     let url = format!(
-        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price",
-        symbol
+        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price&crumb={}",
+        symbol, session.crumb
     );
 
-    let resp = match client
+    let resp = match session.client
         .get(&url)
-        .header("User-Agent", "Mozilla/5.0")
         .send()
         .await
     {
@@ -256,6 +298,7 @@ async fn fetch_fundamentals(
 /// Fetch quote for a single stock, combining chart + fundamentals.
 pub async fn fetch_stock_quote(
     client: &Client,
+    session: &YahooSession,
     stock_id: i32,
     symbol: &str,
 ) -> Result<StockQuote, String> {
@@ -269,7 +312,7 @@ pub async fn fetch_stock_quote(
     };
 
     let (pe_ratio, pb_ratio, market_cap, eps, dividend_yield, beta, avg_volume_10d, week52_high, week52_low) =
-        fetch_fundamentals(client, symbol).await;
+        fetch_fundamentals(session, symbol).await;
 
     Ok(StockQuote {
         stock_id,

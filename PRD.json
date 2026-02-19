@@ -1192,18 +1192,170 @@
         },
         {
           "id": "US009",
-          "title": "As a user, I want to see detailed outlier list",
-          "description": "Show scrollable list of outlier stocks with details",
+          "title": "As a user, I want to see comprehensive outlier analysis dashboard",
+          "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
           "acceptance_criteria": [
-            "Scrollable list below sector grid",
-            "Shows stock symbol, name, price change, sector average",
-            "Shows deviation score (σ)",
-            "Click on outlier shows more details"
+            "Scrollable outlier list below sector grid showing multi-dimensional analysis",
+            "Display composite outlier score, individual Z-scores (P/E, P/B, price, volume)",
+            "Show outlier classification (undervalued, overvalued, momentum, etc.)",
+            "Color-coded significance levels (moderate, strong, extreme outliers)",
+            "Historical trend indicators (persistent vs new outliers)",
+            "Click on outlier shows detailed drill-down with charts and context",
+            "Sortable by different metrics (composite score, P/E Z-score, etc.)",
+            "Filter options (outlier type, sector, significance level)"
           ],
-          "complexity": "Medium",
-          "estimated_hours": 4,
+          "complexity": "Large",
+          "estimated_hours": 6,
           "dependencies": ["US008"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "comprehensive_outlier_display": {
+              "outlier_list_item": {
+                "primary_info": [
+                  "Stock symbol (AAPL) + company name (Apple Inc.)",
+                  "Sector badge (Technology - XLK)",
+                  "Composite outlier score (2.8σ with color coding)"
+                ],
+                "detailed_metrics": [
+                  "P/E Z-score: -2.1σ (undervalued vs sector)",
+                  "P/B Z-score: -1.8σ (trading below book value)",
+                  "Price Z-score: +0.5σ (slight outperformance)",
+                  "Volume Z-score: +3.2σ (unusual trading activity)"
+                ],
+                "outlier_classification": {
+                  "type": "undervalued",
+                  "confidence": "strong", 
+                  "description": "Significantly undervalued on fundamentals despite recent price strength"
+                },
+                "trend_indicators": [
+                  "↗ New outlier (first detected today)",
+                  "🔥 Persistent outlier (detected 5+ days)",
+                  "📈 Strengthening (outlier score increasing)",
+                  "📉 Weakening (outlier score decreasing)"
+                ]
+              }
+            },
+            "interactive_features": {
+              "sorting_options": [
+                "Composite Score (strongest outliers first)",
+                "P/E Z-Score (most undervalued first)",
+                "P/B Z-Score (lowest book value multiples)",
+                "Price Performance (biggest movers)",
+                "Volume Anomaly (highest volume spikes)"
+              ],
+              "filtering_controls": [
+                "Outlier Type: [All] [Undervalued] [Overvalued] [Momentum] [Value Trap]",
+                "Significance: [All] [Moderate 1.5σ+] [Strong 2σ+] [Extreme 3σ+]",
+                "Sector: [All] [Technology] [Healthcare] etc.",
+                "Trend: [All] [New] [Persistent] [Strengthening] [Weakening]"
+              ],
+              "search_functionality": "Search by stock symbol or company name"
+            },
+            "drill_down_modal": {
+              "triggered_by": "Click on any outlier in the list",
+              "detailed_view_sections": {
+                "stock_overview": [
+                  "Company name, sector, market cap",
+                  "Current price, price change, volume",
+                  "Key ratios: P/E, P/B, dividend yield"
+                ],
+                "outlier_analysis": [
+                  "Visual chart showing where stock sits vs sector distribution",
+                  "Detailed Z-score breakdown with explanations",
+                  "Composite score calculation transparency"
+                ],
+                "historical_trends": [
+                  "7-day outlier score chart (from outlier_detections table)",
+                  "Persistence indicator: 'Has been undervalued outlier for 12 days'",
+                  "Score evolution: 'Outlier strength increasing from 2.1σ to 2.8σ'"
+                ],
+                "sector_context": [
+                  "How this stock compares to sector averages",
+                  "Sector performance summary",
+                  "Other notable outliers in same sector"
+                ],
+                "actionable_insights": [
+                  "Investment thesis: 'Strong fundamentals, unusual volume suggests institutional interest'",
+                  "Risk factors: 'P/E compression possible if earnings disappoint'",
+                  "Comparable stocks in other sectors with similar patterns"
+                ]
+              }
+            },
+            "visual_design": {
+              "list_layout": {
+                "item_height": "120px each for comprehensive information",
+                "responsive_columns": [
+                  "Stock info (symbol, name, sector) - 25%",
+                  "Composite score with visual indicator - 15%", 
+                  "Individual Z-scores grid - 35%",
+                  "Classification & trends - 25%"
+                ],
+                "color_coding": {
+                  "undervalued": "Green background tint",
+                  "overvalued": "Red background tint",
+                  "momentum": "Blue background tint",
+                  "value_trap": "Orange background tint"
+                }
+              },
+              "significance_indicators": [
+                "1.5σ - 2σ: Orange dot (moderate)",
+                "2σ - 3σ: Red dot (strong)", 
+                "3σ+: Red exclamation mark (extreme)"
+              ],
+              "trend_icons": [
+                "New: ✨ sparkle icon",
+                "Persistent: 🔥 fire icon",
+                "Strengthening: 📈 chart up",
+                "Weakening: 📉 chart down"
+              ]
+            },
+            "data_integration": {
+              "tauri_commands": [
+                "#[tauri::command]",
+                "pub async fn get_all_outliers(threshold: f64) -> Result<Vec<OutlierSummary>, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn get_outlier_details(stock_id: i32) -> Result<OutlierDetails, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn get_outlier_history(stock_id: i32, days: i32) -> Result<Vec<OutlierHistoryPoint>, String>"
+              ],
+              "react_data_structures": [
+                "interface OutlierSummary {",
+                "  stock: Stock;",
+                "  sector: Sector;", 
+                "  composite_score: number;",
+                "  z_scores: ZScores;",
+                "  outlier_type: OutlierType;",
+                "  significance_level: SignificanceLevel;",
+                "  trend: OutlierTrend;",
+                "  days_as_outlier: number;",
+                "}"
+              ]
+            },
+            "performance_considerations": {
+              "pagination": "Load 50 outliers initially, infinite scroll for more",
+              "virtualization": "Use react-window for smooth scrolling with many outliers",
+              "caching": "Cache outlier list and only refresh on data update",
+              "sorting_optimization": "Sort on backend, not frontend for large datasets"
+            },
+            "empty_states": {
+              "no_outliers": "No outliers detected with current threshold. Try lowering sensitivity.",
+              "loading_state": "Analyzing market data for outliers...",
+              "error_state": "Failed to load outlier data. Check your connection and try refreshing."
+            },
+            "validation_steps": [
+              "Outlier list displays comprehensive information for each stock",
+              "Composite scores and individual Z-scores are accurate and match US008 calculations",
+              "Outlier classifications make intuitive sense (undervalued stocks have low P/E + P/B)",
+              "Historical trends work correctly (persistent outliers show fire icon)",
+              "Sorting and filtering controls work smoothly",
+              "Drill-down modal provides detailed analysis and charts",
+              "Color coding helps quickly identify outlier types",
+              "Performance remains smooth with 100+ outliers",
+              "Empty states and loading states provide good user experience"
+            ]
+          }
         }
       ]
     },

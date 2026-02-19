@@ -60,8 +60,8 @@ async fn fetch_sp500_from_wikipedia(client: &Client) -> Result<Vec<WikiStock>, S
             .trim()
             .to_string();
 
-        // Column 3: GICS Sector
-        let gics_sector = cells[3].text().collect::<String>().trim().to_string();
+        // Column 2: GICS Sector
+        let gics_sector = cells[2].text().collect::<String>().trim().to_string();
 
         if !symbol.is_empty() && !gics_sector.is_empty() {
             stocks.push(WikiStock {

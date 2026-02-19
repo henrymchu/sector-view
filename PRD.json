@@ -278,12 +278,97 @@
             "Yahoo Finance API integration working",
             "Sector cards show real price change %",
             "Data updates when refresh is pressed", 
-            "Handles API errors gracefully (shows cached data)"
+            "Handles API errors gracefully (shows cached data)",
+            "Respects API rate limits (no more than 2000 requests/hour)"
           ],
           "complexity": "Large",
           "estimated_hours": 8,
           "dependencies": ["US006"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "api_strategy": {
+              "primary": "Yahoo Finance via Rust reqwest HTTP client",
+              "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+              "rate_limit": "2000 requests/hour (Yahoo's free tier)",
+              "backup_plan": "If blocked, fall back to cached data or yfinance Python service"
+            },
+            "database_evolution": {
+              "new_table": "market_data",
+              "schema": [
+                "id INTEGER PRIMARY KEY",
+                "stock_id INTEGER NOT NULL REFERENCES stocks(id)",
+                "timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+                "price REAL NOT NULL",
+                "price_change REAL NOT NULL -- Dollar change from previous close",
+                "price_change_percent REAL NOT NULL -- Percentage change",
+                "volume INTEGER",
+                "market_cap INTEGER"
+              ],
+              "indexes": [
+                "CREATE INDEX idx_market_data_stock_timestamp ON market_data(stock_id, timestamp)",
+                "CREATE INDEX idx_market_data_timestamp ON market_data(timestamp)"
+              ]
+            },
+            "data_flow": [
+              "1. Fetch individual stock data for all seeded stocks (~55 stocks)",
+              "2. Insert/update market_data table with current prices",
+              "3. Calculate sector averages by grouping stocks by sector_id",
+              "4. Cache sector averages in memory for UI display",
+              "5. Update React UI with fresh sector performance data"
+            ],
+            "caching_strategy": {
+              "in_memory": "Store latest sector averages in Rust HashMap",
+              "database": "Keep last 24h of market_data for offline fallback",
+              "ttl": "Cache valid for 15 minutes during market hours",
+              "offline_mode": "Show cached data with timestamp when API fails"
+            },
+            "rust_dependencies": [
+              "reqwest = { version = '0.11', features = ['json'] }",
+              "serde = { version = '1.0', features = ['derive'] }",
+              "serde_json = '1.0'",
+              "chrono = { version = '0.4', features = ['serde'] }"
+            ],
+            "key_files": {
+              "src-tauri/src/market_data.rs": {
+                "description": "Yahoo Finance API client and data fetching",
+                "functions": [
+                  "fetch_stock_quote(symbol: &str) -> Result<StockQuote>",
+                  "fetch_all_stocks() -> Result<Vec<StockQuote>>",
+                  "calculate_sector_averages(quotes: Vec<StockQuote>) -> HashMap<i32, SectorAverage>"
+                ]
+              },
+              "src-tauri/src/cache.rs": {
+                "description": "In-memory caching with TTL",
+                "functions": [
+                  "get_cached_sectors() -> Option<Vec<SectorSummary>>",
+                  "cache_sector_data(data: Vec<SectorSummary>)",
+                  "is_cache_expired() -> bool"
+                ]
+              },
+              "src-tauri/migrations/002_market_data.sql": {
+                "description": "Add market_data table and indexes",
+                "content": "CREATE TABLE market_data (...); CREATE INDEX ..."
+              }
+            },
+            "tauri_commands": [
+              "#[tauri::command] async fn refresh_market_data() -> Result<Vec<SectorSummary>, String>",
+              "#[tauri::command] async fn get_sector_performance() -> Result<Vec<SectorSummary>, String>"
+            ],
+            "error_handling": {
+              "api_failure": "Return cached data with warning message",
+              "rate_limit_hit": "Show 'too many requests' error, use cache",
+              "network_timeout": "Fall back to last known data",
+              "invalid_response": "Log error, skip problematic stocks"
+            },
+            "validation_steps": [
+              "Can fetch real quotes for all seeded stocks (AAPL, MSFT, etc.)",
+              "Market data table populated with current prices and changes",
+              "Sector cards display real price change percentages",
+              "Cache works - second refresh is faster than first",
+              "Graceful degradation when API is unavailable",
+              "No rate limit violations during normal usage"
+            ]
+          }
         },
         {
           "id": "US008",

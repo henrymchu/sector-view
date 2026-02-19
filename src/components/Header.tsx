@@ -30,7 +30,7 @@ function Header({ refreshing, lastRefresh, onRefresh, progress }: HeaderProps) {
 
   return (
     <header className="app-header">
-      <h1 className="app-title">Sector View</h1>
+      <h1 className="app-title">GICS Intelligence</h1>
       <div className="header-actions">
         {lastRefresh && (
           <span className="last-refresh">

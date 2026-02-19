@@ -313,17 +313,204 @@
         {
           "id": "US003",
           "title": "As a user, I want a refresh button to update data",
-          "description": "Add refresh functionality to the UI (mock data for now)",
+          "description": "Add manual refresh functionality with loading states and user feedback",
           "acceptance_criteria": [
-            "Refresh button in top toolbar",
-            "Button shows loading state when pressed",
-            "Mock data changes when refreshed",
-            "Success/error feedback to user"
+            "Refresh button in top toolbar with icon and text",
+            "Button shows loading state when pressed (spinner + disabled)",
+            "Data refreshes when clicked (initially mock data, real data in US007)",
+            "Success/error feedback to user via toast or status message",
+            "Prevents multiple simultaneous refreshes"
           ],
           "complexity": "Small", 
           "estimated_hours": 2,
           "dependencies": ["US002"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "ui_design": {
+              "button_location": "Top toolbar/header area, right side",
+              "button_style": "Primary button with refresh icon + 'Refresh' text",
+              "loading_state": "Spinner icon replaces refresh icon, button disabled and shows 'Refreshing...'",
+              "feedback": "Toast notification or status bar message for success/error"
+            },
+            "user_control_philosophy": {
+              "manual_over_automatic": "User decides when to refresh rather than automatic intervals",
+              "benefits": [
+                "Respects API rate limits (user won't spam refresh)",
+                "Saves battery/resources",
+                "User controls when they see new data",
+                "No surprise data changes during analysis"
+              ],
+              "future_enhancement": "US015 will add optional auto-refresh for users who want it"
+            },
+            "component_structure": {
+              "src/components/Header.tsx": {
+                "description": "Top toolbar with app title and refresh button",
+                "example_jsx": [
+                  "const Header = () => {",
+                  "  const [refreshing, setRefreshing] = useState(false);",
+                  "  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);",
+                  "",
+                  "  const handleRefresh = async () => {",
+                  "    if (refreshing) return; // Prevent double-clicks",
+                  "",
+                  "    setRefreshing(true);",
+                  "    try {",
+                  "      // For now: just simulate data refresh",
+                  "      await new Promise(resolve => setTimeout(resolve, 1500));",
+                  "      setLastRefresh(new Date());",
+                  "      showToast('Data refreshed successfully', 'success');",
+                  "    } catch (error) {",
+                  "      showToast('Failed to refresh data', 'error');",
+                  "    } finally {",
+                  "      setRefreshing(false);",
+                  "    }",
+                  "  };",
+                  "",
+                  "  return (",
+                  "    <header className=\"app-header\">",
+                  "      <h1 className=\"app-title\">Sector View</h1>",
+                  "      <div className=\"header-actions\">",
+                  "        {lastRefresh && (",
+                  "          <span className=\"last-refresh\">",
+                  "            Last updated: {formatTime(lastRefresh)}",
+                  "          </span>",
+                  "        )}",
+                  "        <button",
+                  "          className={`refresh-btn ${refreshing ? 'loading' : ''}`}",
+                  "          onClick={handleRefresh}",
+                  "          disabled={refreshing}",
+                  "        >",
+                  "          {refreshing ? (",
+                  "            <>",
+                  "              <SpinnerIcon className=\"spin\" />",
+                  "              Refreshing...",
+                  "            </>",
+                  "          ) : (",
+                  "            <>",
+                  "              <RefreshIcon />",
+                  "              Refresh",
+                  "            </>",
+                  "          )}",
+                  "        </button>",
+                  "      </div>",
+                  "    </header>",
+                  "  );",
+                  "};"
+                ]
+              },
+              "src/components/Toast.tsx": {
+                "description": "Simple toast notification system for user feedback",
+                "purpose": "Show success/error messages after refresh attempts"
+              }
+            },
+            "mock_data_strategy": {
+              "during_us003": "Simulate refresh by changing placeholder values or timestamps",
+              "example_mock_refresh": [
+                "// Simulate data change by updating timestamp or random values",
+                "const mockRefresh = () => {",
+                "  const mockChanges = ['+1.2%', '-0.8%', '+2.1%', '--'];",
+                "  const randomChange = mockChanges[Math.floor(Math.random() * mockChanges.length)];",
+                "  // Update sector cards with new mock values",
+                "};"
+              ],
+              "visual_feedback": "Show different placeholder values, updated timestamps, or subtle animation"
+            },
+            "integration_with_future_stories": {
+              "us007_connection": "Refresh button will call market data refresh functions",
+              "refresh_context": "Pass refresh trigger down to SectorGrid component",
+              "data_invalidation": "Clear cached data and fetch fresh from API"
+            },
+            "css_styling": {
+              "src/styles/Header.css": {
+                "key_styles": [
+                  ".app-header {",
+                  "  display: flex;",
+                  "  justify-content: space-between;",
+                  "  align-items: center;",
+                  "  padding: 16px 24px;",
+                  "  background: #ffffff;",
+                  "  border-bottom: 1px solid #e2e8f0;",
+                  "  box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
+                  "}",
+                  "",
+                  ".app-title {",
+                  "  font-size: 24px;",
+                  "  font-weight: 700;",
+                  "  color: #1f2937;",
+                  "  margin: 0;",
+                  "}",
+                  "",
+                  ".header-actions {",
+                  "  display: flex;",
+                  "  align-items: center;",
+                  "  gap: 16px;",
+                  "}",
+                  "",
+                  ".last-refresh {",
+                  "  font-size: 14px;",
+                  "  color: #6b7280;",
+                  "}",
+                  "",
+                  ".refresh-btn {",
+                  "  display: flex;",
+                  "  align-items: center;",
+                  "  gap: 8px;",
+                  "  background: #3b82f6;",
+                  "  color: white;",
+                  "  border: none;",
+                  "  border-radius: 6px;",
+                  "  padding: 10px 16px;",
+                  "  font-size: 14px;",
+                  "  font-weight: 500;",
+                  "  cursor: pointer;",
+                  "  transition: all 0.2s ease;",
+                  "}",
+                  "",
+                  ".refresh-btn:hover:not(:disabled) {",
+                  "  background: #2563eb;",
+                  "  transform: translateY(-1px);",
+                  "}",
+                  "",
+                  ".refresh-btn:disabled {",
+                  "  opacity: 0.7;",
+                  "  cursor: not-allowed;",
+                  "  transform: none;",
+                  "}",
+                  "",
+                  ".spin {",
+                  "  animation: spin 1s linear infinite;",
+                  "}",
+                  "",
+                  "@keyframes spin {",
+                  "  from { transform: rotate(0deg); }",
+                  "  to { transform: rotate(360deg); }",
+                  "}"
+                ]
+              }
+            },
+            "user_experience_details": {
+              "double_click_prevention": "Disable button while refreshing to prevent multiple API calls",
+              "visual_feedback": "Spinner animation and text change during refresh",
+              "timestamp_display": "Show 'Last updated: 2:34 PM' so users know data freshness",
+              "error_handling": "Clear error messages, don't crash on failed refresh"
+            },
+            "accessibility": [
+              "Button has proper ARIA labels",
+              "Loading state announced to screen readers", 
+              "Keyboard navigation support",
+              "High contrast button colors"
+            ],
+            "validation_steps": [
+              "Refresh button appears in top toolbar with proper styling",
+              "Button shows loading state when clicked (spinner + disabled)",
+              "Mock data changes visually after refresh completes",
+              "Success message shows after successful refresh", 
+              "Error message shows if refresh fails (simulate network error)",
+              "Double-clicking doesn't trigger multiple refreshes",
+              "Last refresh timestamp updates correctly",
+              "Button returns to normal state after refresh completes"
+            ]
+          }
         }
       ]
     },

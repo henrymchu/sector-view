@@ -193,15 +193,61 @@
           "title": "As a developer, I want to populate initial sector data",
           "description": "Seed database with 11 GICS sectors and major S&P 500 stocks",
           "acceptance_criteria": [
-            "All 11 GICS sectors inserted with descriptions",
-            "Top 50 stocks per sector added (~500 total)",
+            "All 11 GICS sectors inserted with ETF symbols",
+            "Representative S&P 500 stocks added per sector (~50-100 total for MVP)",
             "Proper foreign key relationships established",
-            "Data validation rules enforced"
+            "Some stocks with NULL sector_id for testing edge cases"
           ],
           "complexity": "Medium",
           "estimated_hours": 3,
           "dependencies": ["US004"],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "sector_seed_data": [
+              { "symbol": "XLK", "name": "Information Technology" },
+              { "symbol": "XLV", "name": "Health Care" },
+              { "symbol": "XLF", "name": "Financials" },
+              { "symbol": "XLY", "name": "Consumer Discretionary" },
+              { "symbol": "XLC", "name": "Communication Services" },
+              { "symbol": "XLI", "name": "Industrials" },
+              { "symbol": "XLP", "name": "Consumer Staples" },
+              { "symbol": "XLE", "name": "Energy" },
+              { "symbol": "XLU", "name": "Utilities" },
+              { "symbol": "XLRE", "name": "Real Estate" },
+              { "symbol": "XLB", "name": "Materials" }
+            ],
+            "sample_stocks_per_sector": {
+              "XLK": ["AAPL", "MSFT", "GOOGL", "NVDA", "META"],
+              "XLV": ["JNJ", "PFE", "UNH", "ABBV", "TMO"],
+              "XLF": ["JPM", "BAC", "WFC", "GS", "MS"],
+              "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE"],
+              "XLC": ["GOOGL", "META", "VZ", "T", "DIS"],
+              "XLI": ["BA", "CAT", "UPS", "GE", "RTX"],
+              "XLP": ["PG", "KO", "PEP", "WMT", "COST"],
+              "XLE": ["XOM", "CVX", "COP", "EOG", "SLB"],
+              "XLU": ["NEE", "SO", "DUK", "AEP", "EXC"],
+              "XLRE": ["AMT", "PLD", "CCI", "EQIX", "SPG"],
+              "XLB": ["LIN", "APD", "SHW", "FCX", "DOW"]
+            },
+            "seed_approach": "Start with ~5 major stocks per sector for MVP. Can expand to full S&P 500 later.",
+            "key_files": {
+              "src-tauri/src/seed_data.rs": {
+                "description": "Hardcoded sector and stock data for initial population",
+                "functions": [
+                  "seed_sectors() -> Result<()>",
+                  "seed_sample_stocks() -> Result<()>",
+                  "seed_unclassified_examples() -> Result<()>"
+                ]
+              }
+            },
+            "validation_steps": [
+              "All 11 sectors inserted with correct ETF symbols",
+              "Sample stocks inserted with proper sector assignments",
+              "At least 1-2 stocks with NULL sector_id for edge case testing",
+              "Foreign key relationships working correctly",
+              "No duplicate symbols in either table"
+            ]
+          }
         },
         {
           "id": "US006",

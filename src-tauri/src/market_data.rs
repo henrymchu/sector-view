@@ -57,6 +57,7 @@ struct KeyStatistics {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SummaryDetail {
+    #[serde(rename = "trailingPE")]
     trailing_pe: Option<YahooValue>,
     dividend_yield: Option<YahooValue>,
     fifty_two_week_high: Option<YahooValue>,

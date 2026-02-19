@@ -5,7 +5,15 @@ use crate::stock_discovery;
 use crate::types::{OutlierStock, RefreshResult, Sector, SectorOutliers, SectorSummary, Stock};
 use crate::DbState;
 use reqwest::Client;
-use tauri::State;
+use serde::Serialize;
+use tauri::{Emitter, State};
+
+#[derive(Clone, Serialize)]
+struct ProgressPayload {
+    current: u32,
+    total: u32,
+    phase: String,
+}
 
 #[tauri::command]
 pub async fn get_sectors(db: State<'_, DbState>) -> Result<Vec<Sector>, String> {
@@ -51,12 +59,19 @@ pub async fn get_sector_performance(
 
 #[tauri::command]
 pub async fn refresh_market_data(
+    app: tauri::AppHandle,
     db: State<'_, DbState>,
     cache: State<'_, SectorCache>,
 ) -> Result<RefreshResult, String> {
     let client = Client::new();
 
     // Step 1: Stock discovery (non-fatal — if it fails, continue with existing stocks)
+    let _ = app.emit("refresh-progress", ProgressPayload {
+        current: 0,
+        total: 0,
+        phase: "discovery".to_string(),
+    });
+
     let discovery = match stock_discovery::discover_stocks(&db.0, &client).await {
         Ok(result) => Some(result),
         Err(e) => {
@@ -73,10 +88,17 @@ pub async fn refresh_market_data(
     .await
     .map_err(|e| format!("Failed to fetch stocks: {e}"))?;
 
+    let total = stocks.len() as u32;
     let mut success_count = 0;
     let mut error_count = 0;
 
-    for stock in &stocks {
+    for (i, stock) in stocks.iter().enumerate() {
+        let _ = app.emit("refresh-progress", ProgressPayload {
+            current: (i + 1) as u32,
+            total,
+            phase: "market-data".to_string(),
+        });
+
         match market_data::fetch_stock_quote(&client, stock.id, &stock.symbol).await {
             Ok(quote) => {
                 if let Err(e) = market_data::save_quote(&db.0, &quote).await {
@@ -110,6 +132,7 @@ pub async fn refresh_market_data(
 
 #[tauri::command]
 pub async fn refresh_sector_data(
+    app: tauri::AppHandle,
     sector_symbol: String,
     db: State<'_, DbState>,
     cache: State<'_, SectorCache>,
@@ -128,9 +151,16 @@ pub async fn refresh_sector_data(
     .await
     .map_err(|e| format!("Failed to fetch stocks: {e}"))?;
 
+    let total = stocks.len() as u32;
     let mut success_count = 0;
 
-    for stock in &stocks {
+    for (i, stock) in stocks.iter().enumerate() {
+        let _ = app.emit("refresh-progress", ProgressPayload {
+            current: (i + 1) as u32,
+            total,
+            phase: "market-data".to_string(),
+        });
+
         match market_data::fetch_stock_quote(&client, stock.id, &stock.symbol).await {
             Ok(quote) => {
                 if market_data::save_quote(&db.0, &quote).await.is_ok() {

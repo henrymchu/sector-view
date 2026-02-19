@@ -70,6 +70,28 @@
   to { transform: rotate(360deg); }
 }
 
+.refresh-progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
 @media (prefers-color-scheme: dark) {
   .app-header {
     background: #1e293b;

@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import Header from "./components/Header";
 import SectorGrid from "./components/SectorGrid";
 import OutlierDashboard from "./components/OutlierDashboard";
@@ -39,6 +40,8 @@ function App() {
   const [refreshingSectors, setRefreshingSectors] = useState<Set<string>>(new Set());
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [progress, setProgress] = useState<{ current: number; total: number; phase: string } | null>(null);
+  const unlistenRef = useRef<UnlistenFn | null>(null);
 
   const { getSectorPerformance, refreshMarketData, refreshSectorData, detectOutliers } = useDatabase();
 
@@ -80,7 +83,12 @@ function App() {
   const handleGlobalRefresh = useCallback(async () => {
     if (anyRefreshing) return;
     setGlobalRefreshing(true);
+    setProgress(null);
     try {
+      unlistenRef.current = await listen<{ current: number; total: number; phase: string }>(
+        "refresh-progress",
+        (event) => setProgress(event.payload),
+      );
       const result = await refreshMarketData();
       setSectors(result.sectors);
       setLastRefresh(new Date());
@@ -98,6 +106,9 @@ function App() {
     } catch {
       showToast("Failed to refresh market data", "error");
     } finally {
+      unlistenRef.current?.();
+      unlistenRef.current = null;
+      setProgress(null);
       setGlobalRefreshing(false);
     }
   }, [anyRefreshing, refreshMarketData, showToast, loadOutliers]);
@@ -105,7 +116,12 @@ function App() {
   const handleSectorRefresh = useCallback(async (symbol: string) => {
     if (anyRefreshing) return;
     setRefreshingSectors(new Set([symbol]));
+    setProgress(null);
     try {
+      unlistenRef.current = await listen<{ current: number; total: number; phase: string }>(
+        "refresh-progress",
+        (event) => setProgress(event.payload),
+      );
       const data = await refreshSectorData(symbol);
       setSectors(data);
       const sector = data.find((s) => s.symbol === symbol);
@@ -116,6 +132,9 @@ function App() {
       const sector = sectors.find((s) => s.symbol === symbol);
       showToast(`Failed to refresh ${sector?.name ?? symbol}`, "error");
     } finally {
+      unlistenRef.current?.();
+      unlistenRef.current = null;
+      setProgress(null);
       setRefreshingSectors(new Set());
     }
   }, [anyRefreshing, refreshSectorData, showToast, sectors, loadOutliers]);
@@ -123,9 +142,10 @@ function App() {
   return (
     <>
       <Header
-        refreshing={globalRefreshing}
+        refreshing={anyRefreshing}
         lastRefresh={lastRefresh}
         onRefresh={handleGlobalRefresh}
+        progress={progress}
       />
       <main className="container">
         <SectorGrid

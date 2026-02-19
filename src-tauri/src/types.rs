@@ -1,6 +1,20 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiscoveryResult {
+    pub stocks_discovered: u32,
+    pub stocks_updated: u32,
+    pub stocks_unchanged: u32,
+    pub errors: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RefreshResult {
+    pub sectors: Vec<SectorSummary>,
+    pub discovery: Option<DiscoveryResult>,
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Sector {
     pub id: i32,

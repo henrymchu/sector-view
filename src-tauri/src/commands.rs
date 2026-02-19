@@ -1,7 +1,8 @@
 use crate::cache::SectorCache;
 use crate::market_data;
 use crate::outlier_detection;
-use crate::types::{OutlierStock, Sector, SectorOutliers, SectorSummary, Stock};
+use crate::stock_discovery;
+use crate::types::{OutlierStock, RefreshResult, Sector, SectorOutliers, SectorSummary, Stock};
 use crate::DbState;
 use reqwest::Client;
 use tauri::State;
@@ -52,10 +53,19 @@ pub async fn get_sector_performance(
 pub async fn refresh_market_data(
     db: State<'_, DbState>,
     cache: State<'_, SectorCache>,
-) -> Result<Vec<SectorSummary>, String> {
+) -> Result<RefreshResult, String> {
     let client = Client::new();
 
-    // Get all stocks with sector assignments
+    // Step 1: Stock discovery (non-fatal — if it fails, continue with existing stocks)
+    let discovery = match stock_discovery::discover_stocks(&db.0, &client).await {
+        Ok(result) => Some(result),
+        Err(e) => {
+            eprintln!("Stock discovery failed (non-fatal): {e}");
+            None
+        }
+    };
+
+    // Step 2: Fetch market data for ALL stocks (including any newly discovered)
     let stocks = sqlx::query_as::<_, Stock>(
         "SELECT id, symbol, name, sector_id FROM stocks WHERE sector_id IS NOT NULL ORDER BY symbol",
     )
@@ -92,7 +102,10 @@ pub async fn refresh_market_data(
     let summaries = query_sector_summaries(&db.0).await?;
     cache.set(summaries.clone());
 
-    Ok(summaries)
+    Ok(RefreshResult {
+        sectors: summaries,
+        discovery,
+    })
 }
 
 #[tauri::command]

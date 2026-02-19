@@ -49,6 +49,18 @@ export interface OutlierStock {
   significance_level: SignificanceLevel;
 }
 
+export interface DiscoveryResult {
+  stocks_discovered: number;
+  stocks_updated: number;
+  stocks_unchanged: number;
+  errors: string[];
+}
+
+export interface RefreshResult {
+  sectors: SectorSummary[];
+  discovery: DiscoveryResult | null;
+}
+
 export interface SectorOutliers {
   sector_id: number;
   sector_name: string;

@@ -81,11 +81,18 @@ function App() {
     if (anyRefreshing) return;
     setGlobalRefreshing(true);
     try {
-      const data = await refreshMarketData();
-      setSectors(data);
+      const result = await refreshMarketData();
+      setSectors(result.sectors);
       setLastRefresh(new Date());
-      const totalStocks = data.reduce((sum, s) => sum + s.stock_count, 0);
-      showToast(`Updated ${totalStocks} stocks across all sectors`, "success");
+      const totalStocks = result.sectors.reduce((sum, s) => sum + s.stock_count, 0);
+      let message = `Updated ${totalStocks} stocks across all sectors`;
+      if (result.discovery) {
+        const d = result.discovery;
+        if (d.stocks_discovered > 0 || d.stocks_updated > 0) {
+          message += ` | Found ${d.stocks_discovered} new, ${d.stocks_updated} sector changes`;
+        }
+      }
+      showToast(message, "success");
       // Re-run outlier detection with fresh data
       await loadOutliers();
     } catch {

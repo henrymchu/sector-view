@@ -3,6 +3,7 @@ mod commands;
 mod database;
 mod market_data;
 mod outlier_detection;
+mod stock_discovery;
 mod types;
 
 use cache::SectorCache;

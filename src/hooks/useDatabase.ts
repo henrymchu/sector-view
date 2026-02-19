@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Sector, Stock, SectorSummary, SectorOutliers, OutlierStock } from "../types/database";
+import type { Sector, Stock, SectorSummary, RefreshResult, SectorOutliers, OutlierStock } from "../types/database";
 
 export function useDatabase() {
   const getSectors = async (): Promise<Sector[]> => {
@@ -29,9 +29,9 @@ export function useDatabase() {
     }
   };
 
-  const refreshMarketData = async (): Promise<SectorSummary[]> => {
+  const refreshMarketData = async (): Promise<RefreshResult> => {
     try {
-      return await invoke<SectorSummary[]>("refresh_market_data");
+      return await invoke<RefreshResult>("refresh_market_data");
     } catch (error) {
       console.error("Failed to refresh market data:", error);
       throw error;

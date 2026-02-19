@@ -121,17 +121,66 @@
         {
           "id": "US004",
           "title": "As a developer, I want SQLite database setup",
-          "description": "Create database schema and connection handling",
+          "description": "Create minimal database schema and connection handling",
           "acceptance_criteria": [
             "SQLite database file created in app data directory",
-            "All tables created per SPEC.md schema",
-            "Database connection pool established",
+            "Basic sectors and stocks tables created",
+            "Database connection established in Rust",
+            "Migration system for future schema changes",
             "Error handling for database failures"
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
           "dependencies": [],
-          "status": "Not Started"
+          "status": "Not Started",
+          "implementation_details": {
+            "minimal_schema": {
+              "philosophy": "Start with just sectors and stocks tables. Add market data tables later when we implement US007 (market data integration).",
+              "tables": {
+                "sectors": [
+                  "id INTEGER PRIMARY KEY",
+                  "name TEXT NOT NULL (e.g., 'Technology')",
+                  "symbol TEXT NOT NULL (e.g., 'XLK' - sector ETF symbol)"
+                ],
+                "stocks": [
+                  "id INTEGER PRIMARY KEY", 
+                  "symbol TEXT NOT NULL (e.g., 'AAPL')",
+                  "name TEXT NOT NULL (e.g., 'Apple Inc.')",
+                  "sector_id INTEGER REFERENCES sectors(id)"
+                ]
+              }
+            },
+            "rust_dependencies": [
+              "sqlx = { version = '0.7', features = ['sqlite', 'runtime-tokio-rustls'] }",
+              "tokio = { version = '1.0', features = ['full'] }"
+            ],
+            "key_files": {
+              "src-tauri/src/database.rs": {
+                "description": "Database connection and basic operations",
+                "functions": [
+                  "init_database() -> Result<SqlitePool>",
+                  "create_tables() -> Result<()>", 
+                  "get_connection() -> &SqlitePool"
+                ]
+              },
+              "src-tauri/migrations/001_initial.sql": {
+                "description": "Initial schema creation",
+                "content": "CREATE TABLE sectors...; CREATE TABLE stocks...;"
+              }
+            },
+            "validation_steps": [
+              "Database file created at correct app data location",
+              "Tables created successfully with correct schema",
+              "Can insert/select from both tables",
+              "Connection pool handles multiple queries",
+              "Graceful error handling for DB failures"
+            ],
+            "future_evolution": [
+              "US007: Add market_data table for prices/volume",
+              "US008: Add outlier_alerts table for detection results", 
+              "US012: Add historical_data table for time series"
+            ]
+          }
         },
         {
           "id": "US005",

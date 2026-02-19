@@ -275,11 +275,13 @@
           "title": "As a user, I want to see real sector performance data",
           "description": "Connect to Yahoo Finance API and display actual market data",
           "acceptance_criteria": [
-            "Yahoo Finance API integration working",
-            "Sector cards show real price change %",
+            "Yahoo Finance API integration working for both price and fundamental data",
+            "Sector cards show multiple metrics (price change %, avg P/E, market cap)",
+            "Market data table captures comprehensive financial metrics",
             "Data updates when refresh is pressed", 
             "Handles API errors gracefully (shows cached data)",
-            "Respects API rate limits (no more than 2000 requests/hour)"
+            "Respects API rate limits (no more than 2000 requests/hour)",
+            "Missing fundamental data handled without crashes"
           ],
           "complexity": "Large",
           "estimated_hours": 8,
@@ -288,8 +290,12 @@
           "implementation_details": {
             "api_strategy": {
               "primary": "Yahoo Finance via Rust reqwest HTTP client",
-              "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+              "endpoints": {
+                "quotes": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+                "fundamentals": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=defaultKeyStatistics,summaryDetail,price"
+              },
               "rate_limit": "2000 requests/hour (Yahoo's free tier)",
+              "data_richness": "Fetch comprehensive metrics: price, volume, P/E, market cap, beta, 52-week range, etc.",
               "backup_plan": "If blocked, fall back to cached data or yfinance Python service"
             },
             "database_evolution": {
@@ -298,11 +304,25 @@
                 "id INTEGER PRIMARY KEY",
                 "stock_id INTEGER NOT NULL REFERENCES stocks(id)",
                 "timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+                "-- Price Data --",
                 "price REAL NOT NULL",
                 "price_change REAL NOT NULL -- Dollar change from previous close",
                 "price_change_percent REAL NOT NULL -- Percentage change",
+                "-- Volume & Liquidity --", 
                 "volume INTEGER",
-                "market_cap INTEGER"
+                "avg_volume_10d INTEGER -- 10-day average volume",
+                "-- Market & Valuation --",
+                "market_cap INTEGER",
+                "pe_ratio REAL -- Price-to-Earnings ratio",
+                "pb_ratio REAL -- Price-to-Book ratio",
+                "-- Profitability --",
+                "eps REAL -- Earnings Per Share",
+                "dividend_yield REAL -- Annual dividend yield %",
+                "-- Volatility --",
+                "beta REAL -- Stock beta (volatility vs market)",
+                "-- 52-Week Range --",
+                "week52_high REAL",
+                "week52_low REAL"
               ],
               "indexes": [
                 "CREATE INDEX idx_market_data_stock_timestamp ON market_data(stock_id, timestamp)",
@@ -310,11 +330,16 @@
               ]
             },
             "data_flow": [
-              "1. Fetch individual stock data for all seeded stocks (~55 stocks)",
-              "2. Insert/update market_data table with current prices",
-              "3. Calculate sector averages by grouping stocks by sector_id",
-              "4. Cache sector averages in memory for UI display",
-              "5. Update React UI with fresh sector performance data"
+              "1. Fetch comprehensive stock data for all seeded stocks (~55 stocks)",
+              "2. Parse both price data (chart API) and fundamentals (quoteSummary API)",
+              "3. Insert/update market_data table with rich financial metrics",
+              "4. Calculate sector averages across multiple dimensions:",
+              "   - Price performance (%, volume-weighted)",
+              "   - Valuation metrics (avg P/E, P/B ratios per sector)", 
+              "   - Volatility (avg beta, price volatility)",
+              "   - Market cap distribution",
+              "5. Cache multi-dimensional sector data for UI and outlier detection",
+              "6. Update React UI with comprehensive sector analytics"
             ],
             "caching_strategy": {
               "in_memory": "Store latest sector averages in Rust HashMap",
@@ -361,12 +386,14 @@
               "invalid_response": "Log error, skip problematic stocks"
             },
             "validation_steps": [
-              "Can fetch real quotes for all seeded stocks (AAPL, MSFT, etc.)",
-              "Market data table populated with current prices and changes",
-              "Sector cards display real price change percentages",
+              "Can fetch comprehensive data for all seeded stocks (AAPL, MSFT, etc.)",
+              "Market data table populated with prices, P/E ratios, market caps, etc.",
+              "Sector cards display multiple metrics (price change, avg P/E, etc.)",
+              "All fundamental data fields have reasonable values (P/E > 0, market cap > 0)",
               "Cache works - second refresh is faster than first",
               "Graceful degradation when API is unavailable",
-              "No rate limit violations during normal usage"
+              "No rate limit violations during normal usage",
+              "Missing data handled gracefully (some stocks may lack P/E, etc.)"
             ]
           }
         },

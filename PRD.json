@@ -1408,6 +1408,182 @@
           "estimated_hours": 10,
           "dependencies": ["US011"],
           "status": "Not Started"
+        },
+        {
+          "id": "US017",
+          "title": "As a user, I want to analyze Russell 2000 small-cap stocks with tailored metrics",
+          "description": "Integrate Russell 2000 universe with small-cap-specific analysis and outlier detection",
+          "acceptance_criteria": [
+            "Toggle between S&P 500 (large-cap) and Russell 2000 (small-cap) analysis modes",
+            "Fetch Russell 2000 constituents from iShares IWM ETF holdings",
+            "Apply small-cap-specific outlier detection with adjusted thresholds",
+            "Handle higher volatility and frequent missing P/E ratios appropriately", 
+            "Display small-cap vs large-cap comparative analysis",
+            "Show liquidity-adjusted metrics (volume relative to float)",
+            "Separate sector distributions for small-cap vs large-cap"
+          ],
+          "complexity": "Large", 
+          "estimated_hours": 10,
+          "dependencies": ["US008", "US009"],
+          "status": "Not Started",
+          "implementation_details": {
+            "small_cap_characteristics": {
+              "key_differences": [
+                "Higher volatility - normal swings are 2-3x larger than large-caps",
+                "Less liquidity - many trade <100k shares/day vs millions for large-caps",
+                "Frequent unprofitability - 30-40% may lack meaningful P/E ratios",
+                "Growth-oriented - often sacrifice current profits for growth",
+                "Economic sensitivity - more affected by interest rates and economic cycles",
+                "Less analyst coverage - fewer professional estimates and research"
+              ],
+              "adjusted_analysis_approach": [
+                "Use higher Z-score thresholds (2.0σ vs 1.5σ for large-caps)",
+                "Focus on P/B, P/S ratios when P/E unavailable", 
+                "Emphasize volume and liquidity anomalies",
+                "Consider revenue growth rates over earnings",
+                "Weight volatility metrics more heavily"
+              ]
+            },
+            "data_integration": {
+              "russell_2000_sourcing": {
+                "primary_source": "iShares IWM ETF holdings data",
+                "backup_sources": ["FTSE Russell official data", "Financial data providers"],
+                "update_frequency": "Monthly (Russell reconstitutes quarterly but holdings change)",
+                "data_quality_considerations": [
+                  "IWM may not hold exactly 2000 stocks (varies 1900-2100)",
+                  "Holdings percentages are small (0.01-0.5% typically)",
+                  "Some stocks may not have complete fundamental data"
+                ]
+              },
+              "database_schema_additions": {
+                "stock_universe_table": [
+                  "CREATE TABLE stock_universe (",
+                  "  id INTEGER PRIMARY KEY,",
+                  "  stock_id INTEGER NOT NULL REFERENCES stocks(id),", 
+                  "  universe_type TEXT NOT NULL, -- 'sp500', 'russell2000'",
+                  "  date_added DATE NOT NULL,",
+                  "  date_removed DATE, -- NULL if still active",
+                  "  INDEX idx_universe_type_active (universe_type, date_removed)",
+                  ");"
+                ],
+                "universe_specific_stats": [
+                  "ALTER TABLE sector_stats_daily ADD COLUMN universe_type TEXT NOT NULL DEFAULT 'sp500';",
+                  "ALTER TABLE outlier_detections ADD COLUMN universe_type TEXT NOT NULL DEFAULT 'sp500';"
+                ]
+              }
+            },
+            "tailored_outlier_detection": {
+              "small_cap_thresholds": {
+                "volatility_adjustment": "Use 2.0σ threshold vs 1.5σ for large-caps",
+                "sector_specific": {
+                  "technology": "2.5σ (higher volatility in small-cap tech)",
+                  "healthcare": "2.2σ (biotech volatility)", 
+                  "financials": "1.8σ (regional banks more stable)",
+                  "energy": "3.0σ (exploration companies very volatile)"
+                }
+              },
+              "alternative_metrics": {
+                "when_pe_unavailable": [
+                  "Price-to-Sales (P/S) ratio analysis",
+                  "Price-to-Book (P/B) remains important",  
+                  "Revenue growth rate outliers",
+                  "Enterprise Value to Revenue (EV/R)"
+                ],
+                "liquidity_metrics": [
+                  "Volume-to-float ratio (trading volume vs available shares)",
+                  "Bid-ask spread analysis (when available)",
+                  "Average daily dollar volume"
+                ]
+              },
+              "composite_scoring_adjustments": {
+                "small_cap_formula": "weighted_score = (p_s_z * 0.25) + (p_b_z * 0.25) + (volume_z * 0.3) + (volatility_z * 0.2)",
+                "missing_data_handling": "Require at least 2 valid metrics for composite score (vs 3 for large-caps)"
+              }
+            },
+            "user_interface_design": {
+              "universe_toggle": {
+                "location": "Header next to refresh button",
+                "design": "Toggle switch: [S&P 500] / [Russell 2000]",
+                "state_persistence": "Remember user preference between sessions"
+              },
+              "comparative_mode": {
+                "side_by_side": "Option to show large-cap vs small-cap sector performance",
+                "outlier_comparison": "Highlight different outlier patterns between universes",
+                "volatility_indicators": "Visual cues for higher small-cap volatility"
+              },
+              "sector_grid_adaptations": {
+                "small_cap_indicators": [
+                  "Different color scheme (blue tint vs current)",
+                  "Volatility warning icons for high-volatility sectors",
+                  "Missing data indicators (e.g., '45% have P/E data')"
+                ],
+                "metrics_display": [
+                  "Show P/S when P/E unavailable",
+                  "Liquidity indicators (avg daily volume)",
+                  "Growth rate emphasis over absolute values"
+                ]
+              }
+            },
+            "data_fetching_implementation": {
+              "iwm_holdings_scraper": {
+                "rust_implementation": [
+                  "// Fetch IWM holdings from iShares",
+                  "pub async fn fetch_russell_2000() -> Result<Vec<String>, String> {",
+                  "    let client = reqwest::Client::new();",
+                  "    ",
+                  "    // Primary: iShares CSV download",
+                  "    let url = \"https://www.ishares.com/us/products/239710/ishares-russell-2000-etf/1467271812596.ajax?fileType=csv\";",
+                  "    ",
+                  "    match client.get(url).send().await {",
+                  "        Ok(response) => {",
+                  "            let csv_text = response.text().await?;",
+                  "            parse_ishares_csv(csv_text)",
+                  "        },",
+                  "        Err(_) => {",
+                  "            // Fallback: scrape holdings page", 
+                  "            fetch_russell_fallback().await",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "error_handling": [
+                  "Graceful fallback if iShares blocks scraping",
+                  "Cache last successful Russell 2000 list",  
+                  "User notification when data is stale"
+                ]
+              }
+            },
+            "performance_considerations": {
+              "data_volume": "Russell 2000 = 2000 stocks vs S&P 500 = 500 stocks (4x data)",
+              "api_rate_limits": "Stagger API calls to avoid overwhelming Yahoo Finance",
+              "database_indexing": "Ensure universe_type is indexed for fast filtering",
+              "ui_responsiveness": "Use pagination/virtualization for large outlier lists"
+            },
+            "analytical_insights": {
+              "cross_universe_comparisons": [
+                "Small-cap vs large-cap sector rotation patterns",
+                "Volatility arbitrage opportunities",
+                "Liquidity premium analysis",
+                "Growth vs value performance differences"
+              ],
+              "unique_small_cap_outliers": [
+                "Micro-caps with institutional accumulation (volume spikes)",
+                "Growth companies with negative P/E but strong revenue",
+                "Regional plays with local market advantages",
+                "Acquisition targets with unusual valuation metrics"
+              ]
+            },
+            "validation_steps": [
+              "Successfully fetch ~2000 Russell 2000 constituents from IWM",
+              "Universe toggle works smoothly between S&P 500 and Russell 2000",
+              "Small-cap outlier detection uses appropriate higher thresholds",
+              "Missing P/E ratios handled gracefully (use P/S, P/B alternatives)",
+              "Comparative analysis shows meaningful differences between universes",
+              "Performance remains acceptable with 4x more stocks",
+              "Sector distributions reflect small-cap vs large-cap differences",
+              "UI clearly distinguishes between small-cap and large-cap analysis modes"
+            ]
+          }
         }
       ]
     },
@@ -1645,11 +1821,18 @@
       "status": "Planned"
     },
     {
-      "name": "Portfolio Ready",
+      "name": "Portfolio Ready", 
       "target_date": "2025-03-30",
       "description": "Production-ready app for job applications",
       "required_stories": ["US012", "US015", "US016"],
       "status": "Planned"
+    },
+    {
+      "name": "Multi-Universe Platform",
+      "target_date": "2025-04-15", 
+      "description": "Comprehensive large-cap and small-cap analysis platform",
+      "required_stories": ["US017"],
+      "status": "Future Enhancement"
     }
   ],
   "success_metrics": [
@@ -1692,6 +1875,12 @@
       "impact": "Low",
       "probability": "Low", 
       "mitigation": "Focus on macOS first, Tauri handles most cross-platform issues"
+    },
+    {
+      "risk": "Russell 2000 Data Complexity",
+      "impact": "Medium",
+      "probability": "Medium",
+      "mitigation": "Higher volatility thresholds, robust missing data handling, iShares ETF backup sources"
     }
   ],
   "notes": {

@@ -1,4 +1,6 @@
+mod commands;
 mod database;
+mod types;
 
 use sqlx::sqlite::SqlitePool;
 use tauri::Manager;
@@ -9,6 +11,10 @@ pub struct DbState(pub SqlitePool);
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![
+            commands::get_sectors,
+            commands::get_stocks_by_sector,
+        ])
         .setup(|app| {
             let handle = app.handle().clone();
             tauri::async_runtime::block_on(async move {

@@ -1,18 +1,30 @@
+import type { SectorSummary } from "../types/database";
 import "./SectorCard.css";
 
-export interface Sector {
-  name: string;
-  symbol: string;
-}
-
 interface SectorCardProps {
-  sector: Sector;
+  sector: SectorSummary;
   sectorRefreshing: boolean;
   anyRefreshing: boolean;
   onSectorRefresh: (symbol: string) => void;
 }
 
+function formatPercent(value: number): string {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
+}
+
+function formatMarketCap(value: number | null): string {
+  if (value == null) return "--";
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(1)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;
+  return `$${value}`;
+}
+
 function SectorCard({ sector, sectorRefreshing, anyRefreshing, onSectorRefresh }: SectorCardProps) {
+  const hasData = sector.stock_count > 0 && sector.avg_change_percent !== 0;
+  const changeClass = sector.avg_change_percent >= 0 ? "positive" : "negative";
+
   return (
     <div className="sector-card" tabIndex={0}>
       <div className="sector-header">
@@ -54,11 +66,21 @@ function SectorCard({ sector, sectorRefreshing, anyRefreshing, onSectorRefresh }
       <div className="sector-metrics">
         <div className="metric">
           <span className="metric-label">Change</span>
-          <span className="metric-value placeholder">--</span>
+          <span className={`metric-value ${hasData ? changeClass : "placeholder"}`}>
+            {hasData ? formatPercent(sector.avg_change_percent) : "--"}
+          </span>
         </div>
         <div className="metric">
-          <span className="metric-label">Outliers</span>
-          <span className="metric-value placeholder">--</span>
+          <span className="metric-label">Avg P/E</span>
+          <span className={`metric-value ${sector.avg_pe_ratio != null ? "" : "placeholder"}`}>
+            {sector.avg_pe_ratio != null ? sector.avg_pe_ratio.toFixed(1) : "--"}
+          </span>
+        </div>
+        <div className="metric">
+          <span className="metric-label">Mkt Cap</span>
+          <span className={`metric-value ${sector.total_market_cap != null ? "" : "placeholder"}`}>
+            {formatMarketCap(sector.total_market_cap)}
+          </span>
         </div>
       </div>
     </div>

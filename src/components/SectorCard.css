@@ -112,6 +112,14 @@
   color: #d1d5db;
 }
 
+.metric-value.positive {
+  color: #16a34a;
+}
+
+.metric-value.negative {
+  color: #dc2626;
+}
+
 @media (prefers-color-scheme: dark) {
   .sector-card {
     background: #1e293b;
@@ -152,5 +160,13 @@
 
   .metric-value.placeholder {
     color: #475569;
+  }
+
+  .metric-value.positive {
+    color: #4ade80;
+  }
+
+  .metric-value.negative {
+    color: #f87171;
   }
 }

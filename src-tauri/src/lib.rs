@@ -1,7 +1,10 @@
+mod cache;
 mod commands;
 mod database;
+mod market_data;
 mod types;
 
+use cache::SectorCache;
 use sqlx::sqlite::SqlitePool;
 use tauri::Manager;
 
@@ -14,9 +17,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_sectors,
             commands::get_stocks_by_sector,
+            commands::get_sector_performance,
+            commands::refresh_market_data,
+            commands::refresh_sector_data,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
+
+            // Initialize cache
+            handle.manage(SectorCache::new());
+
             tauri::async_runtime::block_on(async move {
                 match database::init_database(&handle).await {
                     Ok(pool) => {

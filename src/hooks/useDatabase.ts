@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Sector, Stock } from "../types/database";
+import type { Sector, Stock, SectorSummary } from "../types/database";
 
 export function useDatabase() {
   const getSectors = async (): Promise<Sector[]> => {
@@ -20,5 +20,32 @@ export function useDatabase() {
     }
   };
 
-  return { getSectors, getStocksBySector };
+  const getSectorPerformance = async (): Promise<SectorSummary[]> => {
+    try {
+      return await invoke<SectorSummary[]>("get_sector_performance");
+    } catch (error) {
+      console.error("Failed to get sector performance:", error);
+      throw error;
+    }
+  };
+
+  const refreshMarketData = async (): Promise<SectorSummary[]> => {
+    try {
+      return await invoke<SectorSummary[]>("refresh_market_data");
+    } catch (error) {
+      console.error("Failed to refresh market data:", error);
+      throw error;
+    }
+  };
+
+  const refreshSectorData = async (sectorSymbol: string): Promise<SectorSummary[]> => {
+    try {
+      return await invoke<SectorSummary[]>("refresh_sector_data", { sectorSymbol });
+    } catch (error) {
+      console.error("Failed to refresh sector data:", error);
+      throw error;
+    }
+  };
+
+  return { getSectors, getStocksBySector, getSectorPerformance, refreshMarketData, refreshSectorData };
 }

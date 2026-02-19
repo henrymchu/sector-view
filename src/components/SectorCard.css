@@ -169,4 +169,98 @@
   .metric-value.negative {
     color: #f87171;
   }
+
+  .sector-outliers {
+    border-top-color: #334155;
+  }
+
+  .outlier-count {
+    color: #94a3b8;
+  }
+
+  .outlier-symbol {
+    color: #f1f5f9;
+  }
+
+  .outlier-score {
+    color: #cbd5e1;
+  }
 }
+
+/* -- Outlier Section -- */
+
+.sector-outliers {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.outlier-summary {
+  margin-bottom: 6px;
+}
+
+.outlier-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.outlier-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.outlier-symbol {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.outlier-score {
+  font-weight: 500;
+  color: #475569;
+}
+
+.outlier-type {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Outlier type color variants */
+.outlier-green {
+  background: #f0fdf4;
+}
+.outlier-green .outlier-type { color: #16a34a; }
+
+.outlier-red {
+  background: #fef2f2;
+}
+.outlier-red .outlier-type { color: #dc2626; }
+
+.outlier-blue {
+  background: #eff6ff;
+}
+.outlier-blue .outlier-type { color: #2563eb; }
+
+.outlier-orange {
+  background: #fff7ed;
+}
+.outlier-orange .outlier-type { color: #ea580c; }
+
+.outlier-purple {
+  background: #faf5ff;
+}
+.outlier-purple .outlier-type { color: #9333ea; }
+
+.outlier-gray {
+  background: #f8fafc;
+}
+.outlier-gray .outlier-type { color: #64748b; }

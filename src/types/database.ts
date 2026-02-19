@@ -21,3 +21,38 @@ export interface SectorSummary {
   stock_count: number;
   avg_beta: number | null;
 }
+
+export interface ZScores {
+  pe_z: number | null;
+  pb_z: number | null;
+  price_z: number;
+  volume_z: number | null;
+}
+
+export type OutlierType =
+  | "Undervalued"
+  | "Overvalued"
+  | "Momentum"
+  | "ValueTrap"
+  | "GrowthPremium"
+  | "Mixed";
+
+export type SignificanceLevel = "Moderate" | "Strong" | "Extreme";
+
+export interface OutlierStock {
+  stock_id: number;
+  symbol: string;
+  name: string;
+  z_scores: ZScores;
+  composite_score: number;
+  outlier_type: OutlierType;
+  significance_level: SignificanceLevel;
+}
+
+export interface SectorOutliers {
+  sector_id: number;
+  sector_name: string;
+  sector_symbol: string;
+  outlier_count: number;
+  outliers: OutlierStock[];
+}

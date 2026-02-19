@@ -3,7 +3,7 @@ import Header from "./components/Header";
 import SectorGrid from "./components/SectorGrid";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { useDatabase } from "./hooks/useDatabase";
-import type { SectorSummary } from "./types/database";
+import type { SectorSummary, SectorOutliers } from "./types/database";
 import "./App.css";
 
 // Default sector data shown before any data is loaded
@@ -23,14 +23,23 @@ const DEFAULT_SECTORS: SectorSummary[] = [
 
 let toastId = 0;
 
+function toOutlierMap(data: SectorOutliers[]): Map<string, SectorOutliers> {
+  const map = new Map<string, SectorOutliers>();
+  for (const so of data) {
+    map.set(so.sector_symbol, so);
+  }
+  return map;
+}
+
 function App() {
   const [sectors, setSectors] = useState<SectorSummary[]>(DEFAULT_SECTORS);
+  const [outliersBySector, setOutliersBySector] = useState<Map<string, SectorOutliers>>(new Map());
   const [globalRefreshing, setGlobalRefreshing] = useState(false);
   const [refreshingSectors, setRefreshingSectors] = useState<Set<string>>(new Set());
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const { getSectorPerformance, refreshMarketData, refreshSectorData } = useDatabase();
+  const { getSectorPerformance, refreshMarketData, refreshSectorData, detectOutliers } = useDatabase();
 
   const anyRefreshing = globalRefreshing || refreshingSectors.size > 0;
 
@@ -43,12 +52,23 @@ function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Load cached/existing sector performance on mount
+  const loadOutliers = useCallback(async () => {
+    try {
+      const data = await detectOutliers();
+      setOutliersBySector(toOutlierMap(data));
+    } catch {
+      // Outlier detection is non-critical; keep existing data
+    }
+  }, [detectOutliers]);
+
+  // Load cached/existing sector performance and outliers on mount
   useEffect(() => {
     getSectorPerformance()
       .then((data) => {
         if (data.length > 0) {
           setSectors(data);
+          // Load outliers after performance data is available
+          loadOutliers();
         }
       })
       .catch(() => {
@@ -65,12 +85,14 @@ function App() {
       setLastRefresh(new Date());
       const totalStocks = data.reduce((sum, s) => sum + s.stock_count, 0);
       showToast(`Updated ${totalStocks} stocks across all sectors`, "success");
+      // Re-run outlier detection with fresh data
+      await loadOutliers();
     } catch {
       showToast("Failed to refresh market data", "error");
     } finally {
       setGlobalRefreshing(false);
     }
-  }, [anyRefreshing, refreshMarketData, showToast]);
+  }, [anyRefreshing, refreshMarketData, showToast, loadOutliers]);
 
   const handleSectorRefresh = useCallback(async (symbol: string) => {
     if (anyRefreshing) return;
@@ -80,13 +102,15 @@ function App() {
       setSectors(data);
       const sector = data.find((s) => s.symbol === symbol);
       showToast(`Updated ${sector?.stock_count ?? 0} ${sector?.name ?? symbol} stocks`, "success");
+      // Re-run outlier detection
+      await loadOutliers();
     } catch {
       const sector = sectors.find((s) => s.symbol === symbol);
       showToast(`Failed to refresh ${sector?.name ?? symbol}`, "error");
     } finally {
       setRefreshingSectors(new Set());
     }
-  }, [anyRefreshing, refreshSectorData, showToast, sectors]);
+  }, [anyRefreshing, refreshSectorData, showToast, sectors, loadOutliers]);
 
   return (
     <>
@@ -98,6 +122,7 @@ function App() {
       <main className="container">
         <SectorGrid
           sectors={sectors}
+          outliersBySector={outliersBySector}
           refreshingSectors={refreshingSectors}
           anyRefreshing={anyRefreshing}
           onSectorRefresh={handleSectorRefresh}

@@ -2,6 +2,7 @@ mod cache;
 mod commands;
 mod database;
 mod market_data;
+mod outlier_detection;
 mod types;
 
 use cache::SectorCache;
@@ -20,6 +21,8 @@ pub fn run() {
             commands::get_sector_performance,
             commands::refresh_market_data,
             commands::refresh_sector_data,
+            commands::detect_outliers,
+            commands::get_sector_outliers,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

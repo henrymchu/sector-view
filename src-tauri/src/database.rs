@@ -59,6 +59,10 @@ async fn run_migrations(pool: &SqlitePool) -> Result<(), String> {
             "003_market_data",
             include_str!("../migrations/003_market_data.sql"),
         ),
+        (
+            "004_outlier_detections",
+            include_str!("../migrations/004_outlier_detections.sql"),
+        ),
     ];
 
     for (name, sql) in migrations {

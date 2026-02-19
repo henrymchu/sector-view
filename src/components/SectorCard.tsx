@@ -1,8 +1,9 @@
-import type { SectorSummary } from "../types/database";
+import type { SectorSummary, SectorOutliers } from "../types/database";
 import "./SectorCard.css";
 
 interface SectorCardProps {
   sector: SectorSummary;
+  outliers?: SectorOutliers;
   sectorRefreshing: boolean;
   anyRefreshing: boolean;
   onSectorRefresh: (symbol: string) => void;
@@ -21,9 +22,22 @@ function formatMarketCap(value: number | null): string {
   return `$${value}`;
 }
 
-function SectorCard({ sector, sectorRefreshing, anyRefreshing, onSectorRefresh }: SectorCardProps) {
+function outlierTypeColor(type: string): string {
+  switch (type) {
+    case "Undervalued": return "outlier-green";
+    case "Overvalued": return "outlier-red";
+    case "Momentum": return "outlier-blue";
+    case "ValueTrap": return "outlier-orange";
+    case "GrowthPremium": return "outlier-purple";
+    default: return "outlier-gray";
+  }
+}
+
+function SectorCard({ sector, outliers, sectorRefreshing, anyRefreshing, onSectorRefresh }: SectorCardProps) {
   const hasData = sector.stock_count > 0 && sector.avg_change_percent !== 0;
   const changeClass = sector.avg_change_percent >= 0 ? "positive" : "negative";
+  const outlierCount = outliers?.outlier_count ?? 0;
+  const topOutlier = outliers?.outliers[0];
 
   return (
     <div className="sector-card" tabIndex={0}>
@@ -83,6 +97,18 @@ function SectorCard({ sector, sectorRefreshing, anyRefreshing, onSectorRefresh }
           </span>
         </div>
       </div>
+      {outlierCount > 0 && topOutlier && (
+        <div className="sector-outliers">
+          <div className="outlier-summary">
+            <span className="outlier-count">{outlierCount} outlier{outlierCount !== 1 ? "s" : ""}</span>
+          </div>
+          <div className={`outlier-top ${outlierTypeColor(topOutlier.outlier_type)}`}>
+            <span className="outlier-symbol">{topOutlier.symbol}</span>
+            <span className="outlier-score">{topOutlier.composite_score.toFixed(1)}&sigma;</span>
+            <span className="outlier-type">{topOutlier.outlier_type}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

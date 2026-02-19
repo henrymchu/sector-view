@@ -1,6 +1,7 @@
 use crate::cache::SectorCache;
 use crate::market_data;
-use crate::types::{Sector, SectorSummary, Stock};
+use crate::outlier_detection;
+use crate::types::{OutlierStock, Sector, SectorOutliers, SectorSummary, Stock};
 use crate::DbState;
 use reqwest::Client;
 use tauri::State;
@@ -192,4 +193,25 @@ struct SectorSummaryRow {
     total_market_cap: Option<i64>,
     stock_count: i32,
     avg_beta: Option<f64>,
+}
+
+// -- Outlier Detection Commands --
+
+#[tauri::command]
+pub async fn detect_outliers(
+    threshold: Option<f64>,
+    db: State<'_, DbState>,
+) -> Result<Vec<SectorOutliers>, String> {
+    let threshold = threshold.unwrap_or(1.5);
+    outlier_detection::detect_all_outliers(&db.0, threshold).await
+}
+
+#[tauri::command]
+pub async fn get_sector_outliers(
+    sector_id: i32,
+    threshold: Option<f64>,
+    db: State<'_, DbState>,
+) -> Result<Vec<OutlierStock>, String> {
+    let threshold = threshold.unwrap_or(1.5);
+    outlier_detection::detect_sector_outliers(&db.0, sector_id, threshold).await
 }

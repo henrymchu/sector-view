@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Sector, Stock, SectorSummary } from "../types/database";
+import type { Sector, Stock, SectorSummary, SectorOutliers, OutlierStock } from "../types/database";
 
 export function useDatabase() {
   const getSectors = async (): Promise<Sector[]> => {
@@ -47,5 +47,31 @@ export function useDatabase() {
     }
   };
 
-  return { getSectors, getStocksBySector, getSectorPerformance, refreshMarketData, refreshSectorData };
+  const detectOutliers = async (threshold?: number): Promise<SectorOutliers[]> => {
+    try {
+      return await invoke<SectorOutliers[]>("detect_outliers", { threshold: threshold ?? null });
+    } catch (error) {
+      console.error("Failed to detect outliers:", error);
+      throw error;
+    }
+  };
+
+  const getSectorOutliers = async (sectorId: number, threshold?: number): Promise<OutlierStock[]> => {
+    try {
+      return await invoke<OutlierStock[]>("get_sector_outliers", { sectorId, threshold: threshold ?? null });
+    } catch (error) {
+      console.error("Failed to get sector outliers:", error);
+      throw error;
+    }
+  };
+
+  return {
+    getSectors,
+    getStocksBySector,
+    getSectorPerformance,
+    refreshMarketData,
+    refreshSectorData,
+    detectOutliers,
+    getSectorOutliers,
+  };
 }

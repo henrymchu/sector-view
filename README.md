@@ -1,6 +1,6 @@
 # GICS Intelligence
 
-A macOS desktop app for tracking S&P 500 sector performance and detecting statistical outliers across all 11 GICS sectors. Built with Tauri 2, React 19, and Rust.
+A macOS desktop app for tracking sector performance and detecting statistical outliers across all 11 GICS sectors. Supports both the S&P 500 (large-cap) and Russell 2000 (small-cap) universes. Built with Tauri 2, React 19, and Rust.
 
 ## Screenshots
 
@@ -10,9 +10,10 @@ A macOS desktop app for tracking S&P 500 sector performance and detecting statis
 
 ## Features
 
+- **Dual universe support** — Toggle between S&P 500 (large-cap) and Russell 2000 (small-cap) with per-universe sector summaries and outlier thresholds
 - **Sector overview** — Live metrics for all 11 GICS sectors (price change, P/E ratio, market cap, beta)
-- **Outlier detection** — Z-score analysis to surface undervalued, overvalued, momentum, and other anomalous stocks
-- **Real-time refresh** — Fetches market data from Yahoo Finance with progress tracking
+- **Outlier detection** — Z-score analysis to surface undervalued, overvalued, momentum, and other anomalous stocks (1.5σ threshold for S&P 500, 2.0σ for Russell 2000)
+- **Real-time refresh** — Fetches market data from Yahoo Finance with progress tracking; supports per-sector or full-universe refresh
 - **Local storage** — SQLite database for offline access and historical data
 - **Dark mode** — Follows system appearance
 
@@ -76,7 +77,8 @@ sector-view/
 │   │   ├── database.rs         # SQLite init and migrations
 │   │   ├── market_data.rs      # Yahoo Finance API integration
 │   │   ├── outlier_detection.rs# Z-score outlier analysis
-│   │   └── stock_discovery.rs  # S&P 500 stock discovery
+│   │   ├── stock_discovery.rs  # S&P 500 stock discovery
+│   │   └── russell_discovery.rs# Russell 2000 stock discovery (iShares IWM)
 │   └── migrations/             # SQLite migrations
 ├── package.json
 └── vite.config.ts

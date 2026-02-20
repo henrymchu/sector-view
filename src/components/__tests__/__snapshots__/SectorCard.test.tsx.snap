@@ -1,0 +1,319 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SectorCard > snapshots > matches snapshot while sector is refreshing 1`] = `
+<div
+  class="sector-card"
+  tabindex="0"
+>
+  <div
+    class="sector-header"
+  >
+    <div
+      class="sector-header-top"
+    >
+      <div>
+        <h3
+          class="sector-name"
+        >
+          Information Technology
+        </h3>
+        <span
+          class="sector-symbol"
+        >
+          XLK
+        </span>
+      </div>
+      <button
+        aria-label="Refreshing Information Technology"
+        class="sector-refresh-mini"
+        disabled=""
+      >
+        <svg
+          class="mini-refresh-icon spin"
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+        >
+          <path
+            d="M21 12a9 9 0 1 1-6.219-8.56"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div
+    class="sector-metrics"
+  >
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Change
+      </span>
+      <span
+        class="metric-value positive"
+      >
+        +2.10%
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Avg P/E
+      </span>
+      <span
+        class="metric-value "
+      >
+        28.5
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Mkt Cap
+      </span>
+      <span
+        class="metric-value "
+      >
+        $12.5T
+      </span>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SectorCard > snapshots > matches snapshot with complete data and outliers 1`] = `
+<div
+  class="sector-card"
+  tabindex="0"
+>
+  <div
+    class="sector-header"
+  >
+    <div
+      class="sector-header-top"
+    >
+      <div>
+        <h3
+          class="sector-name"
+        >
+          Information Technology
+        </h3>
+        <span
+          class="sector-symbol"
+        >
+          XLK
+        </span>
+      </div>
+      <button
+        aria-label="Refresh Information Technology"
+        class="sector-refresh-mini"
+      >
+        <svg
+          class="mini-refresh-icon "
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+        >
+          <path
+            d="M21 12a9 9 0 0 1-15.36 6.36M3 12a9 9 0 0 1 15.36-6.36"
+          />
+          <path
+            d="M21 3v9h-9M3 21v-9h9"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div
+    class="sector-metrics"
+  >
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Change
+      </span>
+      <span
+        class="metric-value positive"
+      >
+        +2.10%
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Avg P/E
+      </span>
+      <span
+        class="metric-value "
+      >
+        28.5
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Mkt Cap
+      </span>
+      <span
+        class="metric-value "
+      >
+        $12.5T
+      </span>
+    </div>
+  </div>
+  <div
+    class="sector-outliers"
+  >
+    <div
+      class="outlier-summary"
+    >
+      <span
+        class="outlier-count"
+      >
+        2
+         outlier
+        s
+      </span>
+    </div>
+    <div
+      class="outlier-top outlier-purple"
+    >
+      <span
+        class="outlier-symbol"
+      >
+        AAPL
+      </span>
+      <span
+        class="outlier-score"
+      >
+        2.1
+        σ
+      </span>
+      <span
+        class="outlier-type"
+      >
+        GrowthPremium
+      </span>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SectorCard > snapshots > matches snapshot with null/missing data 1`] = `
+<div
+  class="sector-card"
+  tabindex="0"
+>
+  <div
+    class="sector-header"
+  >
+    <div
+      class="sector-header-top"
+    >
+      <div>
+        <h3
+          class="sector-name"
+        >
+          Energy
+        </h3>
+        <span
+          class="sector-symbol"
+        >
+          XLE
+        </span>
+      </div>
+      <button
+        aria-label="Refresh Energy"
+        class="sector-refresh-mini"
+      >
+        <svg
+          class="mini-refresh-icon "
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+        >
+          <path
+            d="M21 12a9 9 0 0 1-15.36 6.36M3 12a9 9 0 0 1 15.36-6.36"
+          />
+          <path
+            d="M21 3v9h-9M3 21v-9h9"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div
+    class="sector-metrics"
+  >
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Change
+      </span>
+      <span
+        class="metric-value placeholder"
+      >
+        --
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Avg P/E
+      </span>
+      <span
+        class="metric-value placeholder"
+      >
+        --
+      </span>
+    </div>
+    <div
+      class="metric"
+    >
+      <span
+        class="metric-label"
+      >
+        Mkt Cap
+      </span>
+      <span
+        class="metric-value placeholder"
+      >
+        --
+      </span>
+    </div>
+  </div>
+</div>
+`;

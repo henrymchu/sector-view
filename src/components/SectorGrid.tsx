@@ -1,4 +1,4 @@
-import type { SectorSummary, SectorOutliers } from "../types/database";
+import type { SectorSummary, SectorOutliers, UniverseType } from "../types/database";
 import Header from "./Header";
 import SectorCard from "./SectorCard";
 import "./SectorGrid.css";
@@ -19,9 +19,11 @@ interface SectorGridProps {
   lastRefresh: Date | null;
   onRefresh: () => void;
   progress: RefreshProgress | null;
+  universe: UniverseType;
+  onUniverseChange: (universe: UniverseType) => void;
 }
 
-function SectorGrid({ sectors, outliersBySector, refreshingSectors, anyRefreshing, onSectorRefresh, refreshing, lastRefresh, onRefresh, progress }: SectorGridProps) {
+function SectorGrid({ sectors, outliersBySector, refreshingSectors, anyRefreshing, onSectorRefresh, refreshing, lastRefresh, onRefresh, progress, universe, onUniverseChange }: SectorGridProps) {
   return (
     <div className="sector-grid">
       <Header
@@ -29,6 +31,8 @@ function SectorGrid({ sectors, outliersBySector, refreshingSectors, anyRefreshin
         lastRefresh={lastRefresh}
         onRefresh={onRefresh}
         progress={progress}
+        universe={universe}
+        onUniverseChange={onUniverseChange}
       />
       {sectors.map((sector) => (
         <SectorCard

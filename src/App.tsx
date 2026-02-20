@@ -4,7 +4,7 @@ import SectorGrid from "./components/SectorGrid";
 import OutlierDashboard from "./components/OutlierDashboard";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { useDatabase } from "./hooks/useDatabase";
-import type { SectorSummary, SectorOutliers } from "./types/database";
+import type { SectorSummary, SectorOutliers, UniverseType } from "./types/database";
 import "./App.css";
 
 // Default sector data shown before any data is loaded
@@ -35,6 +35,7 @@ function toOutlierMap(data: SectorOutliers[]): Map<string, SectorOutliers> {
 function App() {
   const [sectors, setSectors] = useState<SectorSummary[]>(DEFAULT_SECTORS);
   const [outliersBySector, setOutliersBySector] = useState<Map<string, SectorOutliers>>(new Map());
+  const [universe, setUniverse] = useState<UniverseType>("sp500");
   const [globalRefreshing, setGlobalRefreshing] = useState(false);
   const [refreshingSectors, setRefreshingSectors] = useState<Set<string>>(new Set());
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -42,7 +43,7 @@ function App() {
   const [progress, setProgress] = useState<{ current: number; total: number; phase: string } | null>(null);
   const unlistenRef = useRef<UnlistenFn | null>(null);
 
-  const { getSectorPerformance, refreshMarketData, refreshSectorData, detectOutliers } = useDatabase();
+  const { getSectorPerformance, refreshMarketData, refreshSectorData, detectOutliers, refreshRussell2000Data } = useDatabase();
 
   const anyRefreshing = globalRefreshing || refreshingSectors.size > 0;
 
@@ -55,9 +56,9 @@ function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const loadOutliers = useCallback(async () => {
+  const loadOutliers = useCallback(async (targetUniverse: UniverseType) => {
     try {
-      const data = await detectOutliers();
+      const data = await detectOutliers(undefined, targetUniverse);
       setOutliersBySector(toOutlierMap(data));
     } catch {
       // Outlier detection is non-critical; keep existing data
@@ -66,18 +67,34 @@ function App() {
 
   // Load cached/existing sector performance and outliers on mount
   useEffect(() => {
-    getSectorPerformance()
+    getSectorPerformance("sp500")
       .then((data) => {
         if (data.length > 0) {
           setSectors(data);
-          // Load outliers after performance data is available
-          loadOutliers();
+          loadOutliers("sp500");
         }
       })
       .catch(() => {
         // Keep default sectors on error
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleUniverseChange = useCallback(async (newUniverse: UniverseType) => {
+    if (anyRefreshing || newUniverse === universe) return;
+    setUniverse(newUniverse);
+    setOutliersBySector(new Map());
+    try {
+      const data = await getSectorPerformance(newUniverse);
+      if (data.length > 0) {
+        setSectors(data);
+      } else {
+        setSectors(DEFAULT_SECTORS);
+      }
+      await loadOutliers(newUniverse);
+    } catch {
+      showToast("Failed to load universe data", "error");
+    }
+  }, [anyRefreshing, universe, getSectorPerformance, loadOutliers, showToast]);
 
   const handleGlobalRefresh = useCallback(async () => {
     if (anyRefreshing) return;
@@ -88,7 +105,11 @@ function App() {
         "refresh-progress",
         (event) => setProgress(event.payload),
       );
-      const result = await refreshMarketData();
+
+      const result = universe === "russell2000"
+        ? await refreshRussell2000Data()
+        : await refreshMarketData();
+
       setSectors(result.sectors);
       setLastRefresh(new Date());
       const totalStocks = result.sectors.reduce((sum, s) => sum + s.stock_count, 0);
@@ -100,8 +121,7 @@ function App() {
         }
       }
       showToast(message, "success");
-      // Re-run outlier detection with fresh data
-      await loadOutliers();
+      await loadOutliers(universe);
     } catch {
       showToast("Failed to refresh market data", "error");
     } finally {
@@ -110,7 +130,7 @@ function App() {
       setProgress(null);
       setGlobalRefreshing(false);
     }
-  }, [anyRefreshing, refreshMarketData, showToast, loadOutliers]);
+  }, [anyRefreshing, universe, refreshMarketData, refreshRussell2000Data, showToast, loadOutliers]);
 
   const handleSectorRefresh = useCallback(async (symbol: string) => {
     if (anyRefreshing) return;
@@ -125,8 +145,7 @@ function App() {
       setSectors(data);
       const sector = data.find((s) => s.symbol === symbol);
       showToast(`Updated ${sector?.stock_count ?? 0} ${sector?.name ?? symbol} stocks`, "success");
-      // Re-run outlier detection
-      await loadOutliers();
+      await loadOutliers(universe);
     } catch {
       const sector = sectors.find((s) => s.symbol === symbol);
       showToast(`Failed to refresh ${sector?.name ?? symbol}`, "error");
@@ -136,7 +155,7 @@ function App() {
       setProgress(null);
       setRefreshingSectors(new Set());
     }
-  }, [anyRefreshing, refreshSectorData, showToast, sectors, loadOutliers]);
+  }, [anyRefreshing, refreshSectorData, showToast, sectors, loadOutliers, universe]);
 
   return (
     <>
@@ -151,6 +170,8 @@ function App() {
           lastRefresh={lastRefresh}
           onRefresh={handleGlobalRefresh}
           progress={progress}
+          universe={universe}
+          onUniverseChange={handleUniverseChange}
         />
         <OutlierDashboard outliersBySector={outliersBySector} />
       </main>

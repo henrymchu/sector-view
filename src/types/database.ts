@@ -1,3 +1,5 @@
+export type UniverseType = "sp500" | "russell2000";
+
 export interface Sector {
   id: number;
   name: string;

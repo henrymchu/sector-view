@@ -1,3 +1,4 @@
+import type { UniverseType } from "../types/database";
 import "./Header.css";
 
 interface RefreshProgress {
@@ -11,13 +12,15 @@ interface HeaderProps {
   lastRefresh: Date | null;
   onRefresh: () => void;
   progress?: RefreshProgress | null;
+  universe: UniverseType;
+  onUniverseChange: (universe: UniverseType) => void;
 }
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function Header({ refreshing, lastRefresh, onRefresh, progress }: HeaderProps) {
+function Header({ refreshing, lastRefresh, onRefresh, progress, universe, onUniverseChange }: HeaderProps) {
   const progressLabel = refreshing && progress
     ? progress.phase === "discovery"
       ? "Discovering stocks..."
@@ -36,6 +39,24 @@ function Header({ refreshing, lastRefresh, onRefresh, progress }: HeaderProps) {
           Updated {formatTime(lastRefresh)}
         </span>
       )}
+      <div className="universe-toggle" role="group" aria-label="Select universe">
+        <button
+          className={`toggle-btn ${universe === "sp500" ? "active" : ""}`}
+          onClick={() => onUniverseChange("sp500")}
+          aria-pressed={universe === "sp500"}
+          disabled={refreshing}
+        >
+          S&amp;P 500
+        </button>
+        <button
+          className={`toggle-btn ${universe === "russell2000" ? "active" : ""}`}
+          onClick={() => onUniverseChange("russell2000")}
+          aria-pressed={universe === "russell2000"}
+          disabled={refreshing}
+        >
+          Russell 2000
+        </button>
+      </div>
       <button
         className={`refresh-btn ${refreshing ? "loading" : ""}`}
         onClick={onRefresh}

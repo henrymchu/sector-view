@@ -12,6 +12,24 @@ exports[`SectorGrid > snapshots > matches snapshot with full sector data 1`] = `
     >
       GICS Intelligence
     </h1>
+    <div
+      aria-label="Select universe"
+      class="universe-toggle"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="toggle-btn active"
+      >
+        S&P 500
+      </button>
+      <button
+        aria-pressed="false"
+        class="toggle-btn "
+      >
+        Russell 2000
+      </button>
+    </div>
     <button
       aria-label="Refresh all data"
       class="refresh-btn "
@@ -418,6 +436,24 @@ exports[`SectorGrid > snapshots > matches snapshot with no sectors 1`] = `
     >
       GICS Intelligence
     </h1>
+    <div
+      aria-label="Select universe"
+      class="universe-toggle"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="toggle-btn active"
+      >
+        S&P 500
+      </button>
+      <button
+        aria-pressed="false"
+        class="toggle-btn "
+      >
+        Russell 2000
+      </button>
+    </div>
     <button
       aria-label="Refresh all data"
       class="refresh-btn "
@@ -456,6 +492,24 @@ exports[`SectorGrid > snapshots > matches snapshot with outliers populated 1`] =
     >
       GICS Intelligence
     </h1>
+    <div
+      aria-label="Select universe"
+      class="universe-toggle"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="toggle-btn active"
+      >
+        S&P 500
+      </button>
+      <button
+        aria-pressed="false"
+        class="toggle-btn "
+      >
+        Russell 2000
+      </button>
+    </div>
     <button
       aria-label="Refresh all data"
       class="refresh-btn "

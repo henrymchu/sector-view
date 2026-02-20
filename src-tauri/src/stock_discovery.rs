@@ -136,8 +136,8 @@ pub async fn discover_stocks(pool: &SqlitePool, client: &Client) -> Result<Disco
         .await
         .map_err(|e| format!("DB error checking {}: {e}", ws.symbol))?;
 
-        match existing {
-            Some((_id, current_sector_id)) => {
+        let stock_id = match existing {
+            Some((id, current_sector_id)) => {
                 if current_sector_id != Some(sector_id) {
                     // Sector changed — update
                     sqlx::query("UPDATE stocks SET sector_id = ?, name = ? WHERE symbol = ?")
@@ -151,19 +151,31 @@ pub async fn discover_stocks(pool: &SqlitePool, client: &Client) -> Result<Disco
                 } else {
                     stocks_unchanged += 1;
                 }
+                id
             }
             None => {
                 // New stock — insert
-                sqlx::query("INSERT INTO stocks (symbol, name, sector_id) VALUES (?, ?, ?)")
-                    .bind(&ws.symbol)
-                    .bind(&ws.name)
-                    .bind(sector_id)
-                    .execute(pool)
-                    .await
-                    .map_err(|e| format!("Failed to insert {}: {e}", ws.symbol))?;
+                let result =
+                    sqlx::query("INSERT INTO stocks (symbol, name, sector_id) VALUES (?, ?, ?)")
+                        .bind(&ws.symbol)
+                        .bind(&ws.name)
+                        .bind(sector_id)
+                        .execute(pool)
+                        .await
+                        .map_err(|e| format!("Failed to insert {}: {e}", ws.symbol))?;
                 stocks_discovered += 1;
+                result.last_insert_rowid() as i32
             }
-        }
+        };
+
+        // Track stock as S&P 500 member
+        sqlx::query(
+            "INSERT OR IGNORE INTO stock_universe (stock_id, universe_type) VALUES (?, 'sp500')",
+        )
+        .bind(stock_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to upsert universe for {}: {e}", ws.symbol))?;
     }
 
     println!(

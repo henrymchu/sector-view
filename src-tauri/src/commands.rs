@@ -1,6 +1,7 @@
 use crate::cache::SectorCache;
 use crate::market_data;
 use crate::outlier_detection;
+use crate::russell_discovery;
 use crate::stock_discovery;
 use crate::types::{OutlierStock, RefreshResult, Sector, SectorOutliers, SectorSummary, Stock};
 use crate::DbState;
@@ -39,18 +40,22 @@ pub async fn get_stocks_by_sector(
 
 #[tauri::command]
 pub async fn get_sector_performance(
+    universe: Option<String>,
     db: State<'_, DbState>,
     cache: State<'_, SectorCache>,
 ) -> Result<Vec<SectorSummary>, String> {
-    // Try cache first
-    if let Some(cached) = cache.get() {
-        return Ok(cached);
+    let universe_str = universe.as_deref().unwrap_or("sp500");
+
+    // Use cache only for the default sp500 universe
+    if universe_str == "sp500" {
+        if let Some(cached) = cache.get() {
+            return Ok(cached);
+        }
     }
 
-    // Query from database (latest market_data per stock)
-    let summaries = query_sector_summaries(&db.0).await?;
+    let summaries = query_sector_summaries(&db.0, universe_str).await?;
 
-    if !summaries.is_empty() {
+    if universe_str == "sp500" && !summaries.is_empty() {
         cache.set(summaries.clone());
     }
 
@@ -125,7 +130,7 @@ pub async fn refresh_market_data(
     println!("Refresh complete: {success_count} succeeded, {error_count} failed");
 
     // Recalculate sector summaries from fresh data
-    let summaries = query_sector_summaries(&db.0).await?;
+    let summaries = query_sector_summaries(&db.0, "sp500").await?;
     cache.set(summaries.clone());
 
     Ok(RefreshResult {
@@ -182,15 +187,16 @@ pub async fn refresh_sector_data(
 
     println!("Sector refresh ({sector_symbol}): {success_count}/{} succeeded", stocks.len());
 
-    let summaries = query_sector_summaries(&db.0).await?;
+    let summaries = query_sector_summaries(&db.0, "sp500").await?;
     cache.set(summaries.clone());
 
     Ok(summaries)
 }
 
-/// Query sector summaries from the latest market_data entries.
+/// Query sector summaries from the latest market_data entries, filtered by universe.
 async fn query_sector_summaries(
     pool: &sqlx::sqlite::SqlitePool,
+    universe: &str,
 ) -> Result<Vec<SectorSummary>, String> {
     let rows: Vec<SectorSummaryRow> = sqlx::query_as(
         "SELECT
@@ -204,6 +210,10 @@ async fn query_sector_summaries(
             AVG(md.beta) as avg_beta
         FROM sectors sec
         LEFT JOIN stocks s ON s.sector_id = sec.id
+            AND s.id IN (
+                SELECT stock_id FROM stock_universe
+                WHERE universe_type = ? AND date_removed IS NULL
+            )
         LEFT JOIN market_data md ON md.stock_id = s.id
             AND md.id = (
                 SELECT md2.id FROM market_data md2
@@ -213,6 +223,7 @@ async fn query_sector_summaries(
         GROUP BY sec.id
         ORDER BY sec.name",
     )
+    .bind(universe)
     .fetch_all(pool)
     .await
     .map_err(|e| format!("Failed to query sector summaries: {e}"))?;
@@ -249,18 +260,104 @@ struct SectorSummaryRow {
 #[tauri::command]
 pub async fn detect_outliers(
     threshold: Option<f64>,
+    universe: Option<String>,
     db: State<'_, DbState>,
 ) -> Result<Vec<SectorOutliers>, String> {
-    let threshold = threshold.unwrap_or(1.5);
-    outlier_detection::detect_all_outliers(&db.0, threshold).await
+    let universe_str = universe.as_deref().unwrap_or("sp500");
+    let default_threshold = if universe_str == "russell2000" { 2.0 } else { 1.5 };
+    let threshold = threshold.unwrap_or(default_threshold);
+    outlier_detection::detect_all_outliers(&db.0, threshold, universe_str).await
 }
 
 #[tauri::command]
 pub async fn get_sector_outliers(
     sector_id: i32,
     threshold: Option<f64>,
+    universe: Option<String>,
     db: State<'_, DbState>,
 ) -> Result<Vec<OutlierStock>, String> {
-    let threshold = threshold.unwrap_or(1.5);
-    outlier_detection::detect_sector_outliers(&db.0, sector_id, threshold).await
+    let universe_str = universe.as_deref().unwrap_or("sp500");
+    let default_threshold = if universe_str == "russell2000" { 2.0 } else { 1.5 };
+    let threshold = threshold.unwrap_or(default_threshold);
+    outlier_detection::detect_sector_outliers(&db.0, sector_id, threshold, universe_str).await
+}
+
+// -- Russell 2000 Universe Command --
+
+#[tauri::command]
+pub async fn refresh_russell_2000_data(
+    app: tauri::AppHandle,
+    db: State<'_, DbState>,
+) -> Result<RefreshResult, String> {
+    let client = Client::new();
+
+    // Step 1: Discover Russell 2000 stocks from iShares IWM CSV
+    let _ = app.emit("refresh-progress", ProgressPayload {
+        current: 0,
+        total: 0,
+        phase: "discovery".to_string(),
+    });
+
+    let discovery = match russell_discovery::discover_russell_2000(&db.0, &client).await {
+        Ok(result) => Some(result),
+        Err(e) => {
+            eprintln!("Russell 2000 discovery failed (non-fatal): {e}");
+            None
+        }
+    };
+
+    // Step 2: Authenticate with Yahoo Finance
+    let session = market_data::YahooSession::new()
+        .await
+        .map_err(|e| format!("Yahoo Finance auth failed: {e}"))?;
+
+    // Step 3: Fetch market data for all Russell 2000 stocks
+    let stocks: Vec<Stock> = sqlx::query_as(
+        "SELECT s.id, s.symbol, s.name, s.sector_id
+         FROM stocks s
+         JOIN stock_universe su ON su.stock_id = s.id
+         WHERE su.universe_type = 'russell2000' AND su.date_removed IS NULL
+         ORDER BY s.symbol",
+    )
+    .fetch_all(&db.0)
+    .await
+    .map_err(|e| format!("Failed to fetch Russell 2000 stocks: {e}"))?;
+
+    let total = stocks.len() as u32;
+    let mut success_count = 0;
+    let mut error_count = 0;
+
+    for (i, stock) in stocks.iter().enumerate() {
+        let _ = app.emit("refresh-progress", ProgressPayload {
+            current: (i + 1) as u32,
+            total,
+            phase: "market-data".to_string(),
+        });
+
+        match market_data::fetch_stock_quote(&client, &session, stock.id, &stock.symbol).await {
+            Ok(quote) => {
+                if let Err(e) = market_data::save_quote(&db.0, &quote).await {
+                    eprintln!("Failed to save {}: {e}", stock.symbol);
+                    error_count += 1;
+                } else {
+                    success_count += 1;
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to fetch {}: {e}", stock.symbol);
+                error_count += 1;
+            }
+        }
+
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+
+    println!("Russell 2000 refresh: {success_count} succeeded, {error_count} failed");
+
+    let summaries = query_sector_summaries(&db.0, "russell2000").await?;
+
+    Ok(RefreshResult {
+        sectors: summaries,
+        discovery,
+    })
 }

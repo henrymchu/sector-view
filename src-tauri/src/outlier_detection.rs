@@ -27,23 +27,22 @@ struct SectorStats {
     vol_ratio_std: Option<f64>,
 }
 
-/// Detect outliers across all sectors.
+/// Detect outliers across all sectors for a given universe.
 pub async fn detect_all_outliers(
     pool: &SqlitePool,
     threshold: f64,
+    universe: &str,
 ) -> Result<Vec<SectorOutliers>, String> {
-    // Get all sectors
-    let sectors: Vec<(i32, String, String)> = sqlx::query_as(
-        "SELECT id, name, symbol FROM sectors ORDER BY name",
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| format!("Failed to fetch sectors: {e}"))?;
+    let sectors: Vec<(i32, String, String)> =
+        sqlx::query_as("SELECT id, name, symbol FROM sectors ORDER BY name")
+            .fetch_all(pool)
+            .await
+            .map_err(|e| format!("Failed to fetch sectors: {e}"))?;
 
     let mut results = Vec::new();
 
     for (sector_id, sector_name, sector_symbol) in &sectors {
-        let outliers = detect_sector_outliers(pool, *sector_id, threshold).await?;
+        let outliers = detect_sector_outliers(pool, *sector_id, threshold, universe).await?;
         results.push(SectorOutliers {
             sector_id: *sector_id,
             sector_name: sector_name.clone(),
@@ -56,19 +55,23 @@ pub async fn detect_all_outliers(
     Ok(results)
 }
 
-/// Detect outliers within a single sector.
+/// Detect outliers within a single sector, filtered by universe.
 pub async fn detect_sector_outliers(
     pool: &SqlitePool,
     sector_id: i32,
     threshold: f64,
+    universe: &str,
 ) -> Result<Vec<OutlierStock>, String> {
-    // Get latest market data for all stocks in this sector
+    // Get latest market data for stocks in this sector that belong to the given universe
     let rows: Vec<StockMarketRow> = sqlx::query_as(
         "SELECT s.id as stock_id, s.symbol, s.name, s.sector_id,
                 md.price_change_percent,
                 md.pe_ratio, md.pb_ratio,
                 md.volume, md.avg_volume_10d
          FROM stocks s
+         JOIN stock_universe su ON su.stock_id = s.id
+            AND su.universe_type = ?
+            AND su.date_removed IS NULL
          JOIN market_data md ON md.stock_id = s.id
             AND md.id = (
                 SELECT md2.id FROM market_data md2
@@ -77,6 +80,7 @@ pub async fn detect_sector_outliers(
             )
          WHERE s.sector_id = ?",
     )
+    .bind(universe)
     .bind(sector_id)
     .fetch_all(pool)
     .await
@@ -115,7 +119,7 @@ pub async fn detect_sector_outliers(
 
     // Save detections to database
     for outlier in &outliers {
-        save_detection(pool, outlier, sector_id, threshold).await.ok();
+        save_detection(pool, outlier, sector_id, threshold, universe).await.ok();
     }
 
     Ok(outliers)
@@ -284,13 +288,14 @@ async fn save_detection(
     outlier: &OutlierStock,
     sector_id: i32,
     threshold: f64,
+    universe: &str,
 ) -> Result<(), String> {
     sqlx::query(
         "INSERT INTO outlier_detections (
             stock_id, sector_id, pe_z_score, pb_z_score,
             price_z_score, volume_z_score, composite_score,
-            outlier_type, significance_level, threshold_used
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            outlier_type, significance_level, threshold_used, universe_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(outlier.stock_id)
     .bind(sector_id)
@@ -302,6 +307,7 @@ async fn save_detection(
     .bind(outlier.outlier_type.to_string())
     .bind(outlier.significance_level.to_string())
     .bind(threshold)
+    .bind(universe)
     .execute(pool)
     .await
     .map_err(|e| format!("Failed to save outlier detection: {e}"))?;

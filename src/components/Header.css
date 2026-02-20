@@ -24,6 +24,42 @@
   margin-top: 4px;
 }
 
+.universe-toggle {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  color: #4b5563;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.toggle-btn:hover:not(:disabled):not(.active) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.toggle-btn.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .refresh-btn {
   display: flex;
   align-items: center;
@@ -106,5 +142,22 @@
 
   .last-refresh {
     color: #94a3b8;
+  }
+
+  .universe-toggle {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .toggle-btn {
+    color: #94a3b8;
+  }
+
+  .toggle-btn:hover:not(:disabled):not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .toggle-btn.active {
+    background: #3b82f6;
+    color: white;
   }
 }

@@ -3,6 +3,7 @@ mod commands;
 mod database;
 mod market_data;
 mod outlier_detection;
+mod russell_discovery;
 mod stock_discovery;
 mod types;
 
@@ -24,6 +25,7 @@ pub fn run() {
             commands::refresh_sector_data,
             commands::detect_outliers,
             commands::get_sector_outliers,
+            commands::refresh_russell_2000_data,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

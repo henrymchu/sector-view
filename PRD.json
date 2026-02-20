@@ -1163,23 +1163,133 @@
                 ]
               }
             },
-            "integration_with_ui": {
-              "sector_card_updates": [
-                "Show current outlier count: '8 outliers found'",
-                "Show strongest outlier: 'AAPL: 2.8σ composite'",
-                "Color coding based on predominant outlier type",
-                "Trend indicator: '↗ +2 new outliers vs yesterday'"
-              ],
-              "tauri_commands": [
+            "integration_with_existing_codebase": {
+              "outlier_detection_rs_modifications": {
+                "functions_needing_universe_parameter": [
+                  "calculate_sector_statistics(sector_id: i32, universe: &str) -> SectorStats",
+                  "find_sector_outliers(sector_id: i32, threshold: f64, universe: &str) -> Vec<OutlierStock>",
+                  "get_all_outliers_for_universe(threshold: f64, universe: &str) -> Vec<OutlierStock>",
+                  "calculate_composite_scores_by_universe(universe: &str) -> HashMap<i32, f64>"
+                ],
+                "database_query_updates": [
+                  "// Before: Get all stocks for sector",
+                  "SELECT * FROM stocks WHERE sector_id = ?",
+                  "",
+                  "// After: Get stocks for sector + universe",
+                  "SELECT s.* FROM stocks s",
+                  "JOIN stock_universe su ON s.id = su.stock_id", 
+                  "WHERE s.sector_id = ? AND su.universe_type = ? AND su.date_removed IS NULL"
+                ],
+                "struct_modifications": [
+                  "// Add universe field to outlier detection structs",
+                  "#[derive(Debug, Serialize, Deserialize)]",
+                  "pub struct OutlierStock {",
+                  "    pub stock_id: i32,",
+                  "    pub symbol: String,",
+                  "    pub name: String,",
+                  "    pub universe_type: String, // NEW: 'sp500' or 'russell2000'",
+                  "    pub z_scores: ZScores,",
+                  "    pub composite_score: f64,",
+                  "    pub outlier_type: OutlierType,",
+                  "    pub significance_level: SignificanceLevel,",
+                  "}"
+                ]
+              },
+              "sectorgrid_tsx_modifications": {
+                "universe_state_management": [
+                  "// Add universe state to SectorGrid component",
+                  "const SectorGrid = () => {",
+                  "  const [currentUniverse, setCurrentUniverse] = useState<'sp500' | 'russell2000'>('sp500');",
+                  "  const [sectors, setSectors] = useState<Sector[]>([]);",
+                  "  const [loading, setLoading] = useState(true);",
+                  "",
+                  "  // Load sectors based on current universe",
+                  "  useEffect(() => {",
+                  "    const loadSectors = async () => {",
+                  "      setLoading(true);",
+                  "      try {",
+                  "        const data = await getSectorsByUniverse(currentUniverse);",
+                  "        setSectors(data);",
+                  "      } catch (error) {",
+                  "        console.error('Failed to load sectors:', error);",
+                  "      } finally {",
+                  "        setLoading(false);",
+                  "      }",
+                  "    };",
+                  "    loadSectors();",
+                  "  }, [currentUniverse]); // Re-run when universe changes",
+                  "};"
+                ],
+                "universe_toggle_ui": [
+                  "// Universe toggle component in Header.tsx",
+                  "const UniverseToggle = ({ currentUniverse, onUniverseChange }) => {",
+                  "  return (",
+                  "    <div className=\"universe-toggle\">",
+                  "      <button",
+                  "        className={currentUniverse === 'sp500' ? 'active' : ''}",
+                  "        onClick={() => onUniverseChange('sp500')}",
+                  "      >",
+                  "        S&P 500 ({sectors.length})",
+                  "      </button>",
+                  "      <button", 
+                  "        className={currentUniverse === 'russell2000' ? 'active' : ''}",
+                  "        onClick={() => onUniverseChange('russell2000')}",
+                  "      >",
+                  "        Russell 2000 ({sectors.length})",
+                  "      </button>",
+                  "    </div>",
+                  "  );",
+                  "};"
+                ],
+                "data_flow_changes": [
+                  "1. User clicks universe toggle (S&P 500 ↔ Russell 2000)",
+                  "2. setCurrentUniverse() triggers useEffect in SectorGrid",
+                  "3. getSectorsByUniverse(universe) calls Tauri command",
+                  "4. Rust fetches universe-specific sector data", 
+                  "5. SectorGrid re-renders with new universe data",
+                  "6. Outlier counts update per universe automatically"
+                ]
+              },
+              "tauri_commands_integration": [
+                "// Updated commands with universe parameters",
                 "#[tauri::command]",
-                "pub async fn detect_outliers(threshold: f64) -> Result<Vec<SectorOutliers>, String>",
+                "pub async fn get_sectors_by_universe(universe: String) -> Result<Vec<SectorSummary>, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn detect_outliers_by_universe(threshold: f64, universe: String) -> Result<Vec<SectorOutliers>, String>",
                 "",
                 "#[tauri::command]", 
-                "pub async fn get_sector_outliers(sector_id: i32) -> Result<Vec<OutlierStock>, String>",
+                "pub async fn get_sector_outliers_by_universe(sector_id: i32, universe: String) -> Result<Vec<OutlierStock>, String>",
                 "",
                 "#[tauri::command]",
-                "pub async fn get_outlier_history(stock_id: i32, days: i32) -> Result<Vec<OutlierDetection>, String>"
-              ]
+                "pub async fn refresh_universe_data(universe: String) -> Result<String, String> {",
+                "  match universe.as_str() {",
+                "    \"sp500\" => refresh_sp500_data().await,",
+                "    \"russell2000\" => refresh_russell_2000_data().await,",
+                "    _ => Err(\"Invalid universe type\".to_string())",
+                "  }",
+                "}"
+              ],
+              "react_hooks_updates": {
+                "useDatabase_hook_changes": [
+                  "// Add universe-aware functions to useDatabase hook",
+                  "export const useDatabase = () => {",
+                  "  const getSectors = async (universe = 'sp500'): Promise<Sector[]> => {",
+                  "    return await invoke<Sector[]>('get_sectors_by_universe', { universe });",
+                  "  };",
+                  "",
+                  "  const getOutliers = async (threshold = 1.5, universe = 'sp500'): Promise<OutlierStock[]> => {",
+                  "    return await invoke<OutlierStock[]>('detect_outliers_by_universe', { threshold, universe });",
+                  "  };",
+                  "",
+                  "  const refreshData = async (universe = 'sp500'): Promise<string> => {",
+                  "    return await invoke<string>('refresh_universe_data', { universe });",
+                  "  };",
+                  "",
+                  "  return { getSectors, getOutliers, refreshData };",
+                  "};"
+                ]
+              }
             },
             "validation_and_testing": [
               "Create test cases with known outliers (e.g., stock with P/E 3x sector average)",
@@ -2614,20 +2724,54 @@
             "validation_steps": [
               "Successfully download Russell 2000 constituents from SureDividend.com (~2000 stocks)",
               "Excel parsing extracts symbols, names, sectors, and financial metrics correctly",
+              "Database migration 003_russell_2000_universe.sql runs without errors",
+              "stock_universe table correctly populated with S&P 500 and Russell 2000 stocks",
               "Fallback to Barchart works when primary source unavailable",
               "Sector mapping correctly assigns GICS symbols to small-cap stocks",
-              "Universe toggle works smoothly between S&P 500 and Russell 2000 modes",
+              "Modified outlier_detection.rs functions accept universe parameter correctly",
+              "calculate_sector_statistics() filters stocks by universe (S&P 500 vs Russell 2000)",
+              "find_sector_outliers() returns universe-specific outlier results",
+              "Universe toggle in Header.tsx switches between S&P 500 and Russell 2000 smoothly",
+              "SectorGrid.tsx re-renders with correct universe data when toggle changes",
+              "useDatabase hook universe-aware functions work correctly (getSectors, getOutliers)",
+              "Tauri commands get_sectors_by_universe and detect_outliers_by_universe return correct data",
               "Small-cap outlier detection uses appropriate higher thresholds (2.0σ vs 1.5σ)",
               "Missing P/E ratios handled gracefully (30-40% of small-caps lack P/E)",
               "Alternative metrics (P/S, P/B) work when P/E unavailable",
               "Comparative analysis shows meaningful differences between universes",
               "Performance remains acceptable with 4x more stocks (~2000 vs ~500)",
-              "Data validation catches invalid symbols and missing critical fields",
+              "Data validation catches invalid symbols and missing critical fields", 
               "Sector distributions reflect small-cap vs large-cap characteristics",
               "UI clearly distinguishes between small-cap and large-cap analysis modes",
               "Cache mechanism works for offline usage when data sources unavailable",
-              "Financial metrics from SureDividend integrate properly with outlier detection"
-            ]
+              "Financial metrics from SureDividend integrate properly with outlier detection",
+              "Universe state persists between app sessions (user preference saved)",
+              "Refresh button works correctly for both S&P 500 and Russell 2000 universes"
+            ],
+            "integration_testing_checklist": {
+              "end_to_end_universe_flow": [
+                "1. Start app → defaults to S&P 500 universe → shows ~500 stocks in 11 sectors",
+                "2. Click Russell 2000 toggle → UI updates → shows ~2000 stocks in 11 sectors",
+                "3. Outlier detection runs → returns different outliers for each universe",
+                "4. Sector cards show different metrics (small-cap vs large-cap characteristics)",
+                "5. Refresh button works → updates data for current universe only",
+                "6. Switch back to S&P 500 → returns to original state → no data loss"
+              ],
+              "database_integration_verification": [
+                "Universe queries return correct stock counts (S&P 500: ~500, Russell 2000: ~2000)",
+                "No duplicate stocks appear when switching universes",
+                "Outlier detection results are universe-specific (no cross-contamination)",
+                "Sector statistics calculated separately per universe",
+                "Foreign key relationships maintained across all universe operations"
+              ],
+              "react_component_integration": [
+                "Header universe toggle updates SectorGrid state correctly",
+                "Loading states work during universe switching",
+                "Error handling works when universe data unavailable",
+                "Component re-rendering performance acceptable with larger datasets",
+                "Universe state synchronized across all components"
+              ]
+            }
           }
         }
       ]

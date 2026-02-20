@@ -80,6 +80,33 @@ struct YahooValue {
 
 const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
+/// Build the Yahoo Finance chart API URL for a given symbol.
+fn build_chart_url(symbol: &str) -> String {
+    format!(
+        "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=1d&interval=1d",
+        symbol
+    )
+}
+
+/// Build the Yahoo Finance quoteSummary API URL for a given symbol and crumb.
+fn build_fundamentals_url(symbol: &str, crumb: &str) -> String {
+    format!(
+        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price&crumb={}",
+        symbol, crumb
+    )
+}
+
+/// Calculate price change and percent change from current price and previous close.
+fn calculate_price_change(price: f64, prev_close: f64) -> (f64, f64) {
+    let change = price - prev_close;
+    let percent = if prev_close != 0.0 {
+        (change / prev_close) * 100.0
+    } else {
+        0.0
+    };
+    (change, percent)
+}
+
 /// Authenticated Yahoo Finance session with cookie jar + crumb.
 /// Created once per refresh cycle and reused for all quoteSummary calls.
 pub struct YahooSession {
@@ -145,10 +172,7 @@ async fn fetch_chart_data(
     client: &Client,
     symbol: &str,
 ) -> Result<(f64, f64, Option<i64>), String> {
-    let url = format!(
-        "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=1d&interval=1d",
-        symbol
-    );
+    let url = build_chart_url(symbol);
 
     let resp = client
         .get(&url)
@@ -200,10 +224,7 @@ async fn fetch_fundamentals(
     Option<f64>,
     Option<f64>,
 ) {
-    let url = format!(
-        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price&crumb={}",
-        symbol, session.crumb
-    );
+    let url = build_fundamentals_url(symbol, &session.crumb);
 
     let resp = match session.client
         .get(&url)
@@ -305,12 +326,7 @@ pub async fn fetch_stock_quote(
 ) -> Result<StockQuote, String> {
     let (price, prev_close, volume) = fetch_chart_data(client, symbol).await?;
 
-    let price_change = price - prev_close;
-    let price_change_percent = if prev_close != 0.0 {
-        (price_change / prev_close) * 100.0
-    } else {
-        0.0
-    };
+    let (price_change, price_change_percent) = calculate_price_change(price, prev_close);
 
     let (pe_ratio, pb_ratio, market_cap, eps, dividend_yield, beta, avg_volume_10d, week52_high, week52_low) =
         fetch_fundamentals(session, symbol).await;
@@ -361,4 +377,431 @@ pub async fn save_quote(pool: &SqlitePool, quote: &StockQuote) -> Result<(), Str
     .map_err(|e| format!("Failed to save market data: {e}"))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f64 = 1e-9;
+
+    fn approx_eq(a: f64, b: f64) -> bool {
+        (a - b).abs() < EPSILON
+    }
+
+    // ---- URL construction ----
+
+    #[test]
+    fn test_build_chart_url_standard_symbol() {
+        let url = build_chart_url("AAPL");
+        assert_eq!(
+            url,
+            "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1d&interval=1d"
+        );
+    }
+
+    #[test]
+    fn test_build_chart_url_with_dot_symbol() {
+        // Symbols like BRK.B should appear unmodified in the URL
+        let url = build_chart_url("BRK.B");
+        assert!(url.contains("BRK.B"), "URL should contain 'BRK.B': {url}");
+    }
+
+    #[test]
+    fn test_build_chart_url_contains_required_query_params() {
+        let url = build_chart_url("MSFT");
+        assert!(url.contains("range=1d"), "Missing range param: {url}");
+        assert!(url.contains("interval=1d"), "Missing interval param: {url}");
+    }
+
+    #[test]
+    fn test_build_chart_url_symbol_varies() {
+        assert_ne!(build_chart_url("AAPL"), build_chart_url("MSFT"));
+    }
+
+    #[test]
+    fn test_build_fundamentals_url_contains_symbol_and_crumb() {
+        let url = build_fundamentals_url("AAPL", "my-crumb");
+        assert!(url.contains("AAPL"), "Missing symbol: {url}");
+        assert!(url.contains("crumb=my-crumb"), "Missing crumb: {url}");
+    }
+
+    #[test]
+    fn test_build_fundamentals_url_contains_required_modules() {
+        let url = build_fundamentals_url("AAPL", "crumb");
+        assert!(url.contains("defaultKeyStatistics"), "Missing module: {url}");
+        assert!(url.contains("summaryDetail"), "Missing module: {url}");
+        assert!(url.contains("price"), "Missing module: {url}");
+    }
+
+    #[test]
+    fn test_build_fundamentals_url_crumb_varies() {
+        let url1 = build_fundamentals_url("AAPL", "crumb-aaa");
+        let url2 = build_fundamentals_url("AAPL", "crumb-bbb");
+        assert!(url1.contains("crumb-aaa"));
+        assert!(url2.contains("crumb-bbb"));
+        assert_ne!(url1, url2);
+    }
+
+    #[test]
+    fn test_build_fundamentals_url_symbol_varies() {
+        let url_msft = build_fundamentals_url("MSFT", "crumb");
+        let url_goog = build_fundamentals_url("GOOGL", "crumb");
+        assert!(url_msft.contains("MSFT"));
+        assert!(url_goog.contains("GOOGL"));
+        assert_ne!(url_msft, url_goog);
+    }
+
+    // ---- Price change calculation ----
+
+    #[test]
+    fn test_calculate_price_change_gain() {
+        let (change, pct) = calculate_price_change(110.0, 100.0);
+        assert!(approx_eq(change, 10.0));
+        assert!(approx_eq(pct, 10.0));
+    }
+
+    #[test]
+    fn test_calculate_price_change_loss() {
+        let (change, pct) = calculate_price_change(90.0, 100.0);
+        assert!(approx_eq(change, -10.0));
+        assert!(approx_eq(pct, -10.0));
+    }
+
+    #[test]
+    fn test_calculate_price_change_no_movement() {
+        let (change, pct) = calculate_price_change(100.0, 100.0);
+        assert!(approx_eq(change, 0.0));
+        assert!(approx_eq(pct, 0.0));
+    }
+
+    #[test]
+    fn test_calculate_price_change_zero_prev_close_returns_zero_percent() {
+        // Prevent division by zero — percent should be 0.0 not NaN/Inf
+        let (change, pct) = calculate_price_change(150.0, 0.0);
+        assert!(approx_eq(change, 150.0));
+        assert!(approx_eq(pct, 0.0));
+        assert!(pct.is_finite());
+    }
+
+    #[test]
+    fn test_calculate_price_change_fractional() {
+        let (change, pct) = calculate_price_change(150.25, 147.50);
+        assert!(approx_eq(change, 2.75));
+        assert!(approx_eq(pct, (2.75 / 147.50) * 100.0));
+    }
+
+    // ---- JSON parsing: ChartResponse ----
+
+    #[test]
+    fn test_chart_json_full_response() {
+        let json = r#"{
+            "chart": {
+                "result": [{
+                    "meta": {
+                        "regularMarketPrice": 150.25,
+                        "chartPreviousClose": 147.50,
+                        "regularMarketVolume": 75000000
+                    }
+                }]
+            }
+        }"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        let meta = &parsed.chart.result.unwrap()[0].meta;
+        assert!(approx_eq(meta.regular_market_price.unwrap(), 150.25));
+        assert!(approx_eq(meta.chart_previous_close.unwrap(), 147.50));
+        assert_eq!(meta.regular_market_volume, Some(75_000_000));
+    }
+
+    #[test]
+    fn test_chart_json_null_result() {
+        let json = r#"{"chart": {"result": null}}"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        assert!(parsed.chart.result.is_none());
+    }
+
+    #[test]
+    fn test_chart_json_empty_result_array() {
+        let json = r#"{"chart": {"result": []}}"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        assert!(parsed.chart.result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_chart_json_missing_price_field_gives_none() {
+        let json = r#"{
+            "chart": {
+                "result": [{
+                    "meta": {
+                        "chartPreviousClose": 147.50,
+                        "regularMarketVolume": 50000000
+                    }
+                }]
+            }
+        }"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        let meta = &parsed.chart.result.unwrap()[0].meta;
+        assert!(meta.regular_market_price.is_none());
+        assert!(approx_eq(meta.chart_previous_close.unwrap(), 147.50));
+    }
+
+    #[test]
+    fn test_chart_json_null_volume() {
+        let json = r#"{
+            "chart": {
+                "result": [{
+                    "meta": {
+                        "regularMarketPrice": 150.0,
+                        "chartPreviousClose": 148.0,
+                        "regularMarketVolume": null
+                    }
+                }]
+            }
+        }"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        let meta = &parsed.chart.result.unwrap()[0].meta;
+        assert!(meta.regular_market_volume.is_none());
+    }
+
+    #[test]
+    fn test_chart_json_missing_volume_field_gives_none() {
+        let json = r#"{
+            "chart": {
+                "result": [{
+                    "meta": {
+                        "regularMarketPrice": 200.0,
+                        "chartPreviousClose": 195.0
+                    }
+                }]
+            }
+        }"#;
+        let parsed: ChartResponse = serde_json::from_str(json).unwrap();
+        let meta = &parsed.chart.result.unwrap()[0].meta;
+        assert!(meta.regular_market_volume.is_none());
+    }
+
+    // ---- JSON parsing: QuoteSummaryResponse ----
+
+    #[test]
+    fn test_fundamentals_json_full_response() {
+        let json = r#"{
+            "quoteSummary": {
+                "result": [{
+                    "defaultKeyStatistics": {
+                        "beta": {"raw": 1.2, "fmt": "1.20"},
+                        "trailingEps": {"raw": 6.05, "fmt": "6.05"},
+                        "priceToBook": {"raw": 8.5, "fmt": "8.50"}
+                    },
+                    "summaryDetail": {
+                        "trailingPE": {"raw": 28.5, "fmt": "28.50"},
+                        "dividendYield": {"raw": 0.006, "fmt": "0.60%"},
+                        "fiftyTwoWeekHigh": {"raw": 198.23, "fmt": "198.23"},
+                        "fiftyTwoWeekLow": {"raw": 124.17, "fmt": "124.17"},
+                        "averageVolume10days": {"raw": 55000000.0, "fmt": "55M"},
+                        "marketCap": {"raw": 2400000000000.0, "fmt": "2.4T"}
+                    },
+                    "price": {
+                        "marketCap": {"raw": 2400000000000.0, "fmt": "2.4T"}
+                    }
+                }]
+            }
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let result = &parsed.quote_summary.unwrap().result.unwrap()[0];
+
+        let ks = result.default_key_statistics.as_ref().unwrap();
+        assert!(approx_eq(ks.beta.as_ref().unwrap().raw.unwrap(), 1.2));
+        assert!(approx_eq(ks.trailing_eps.as_ref().unwrap().raw.unwrap(), 6.05));
+        assert!(approx_eq(ks.price_to_book.as_ref().unwrap().raw.unwrap(), 8.5));
+
+        let sd = result.summary_detail.as_ref().unwrap();
+        assert!(approx_eq(sd.trailing_pe.as_ref().unwrap().raw.unwrap(), 28.5));
+        assert!(approx_eq(sd.dividend_yield.as_ref().unwrap().raw.unwrap(), 0.006));
+        assert!(approx_eq(sd.fifty_two_week_high.as_ref().unwrap().raw.unwrap(), 198.23));
+        assert!(approx_eq(sd.fifty_two_week_low.as_ref().unwrap().raw.unwrap(), 124.17));
+        assert!(approx_eq(sd.average_volume_10days.as_ref().unwrap().raw.unwrap(), 55_000_000.0));
+        assert!(approx_eq(sd.market_cap.as_ref().unwrap().raw.unwrap(), 2_400_000_000_000.0));
+    }
+
+    #[test]
+    fn test_fundamentals_json_null_result() {
+        let json = r#"{"quoteSummary": {"result": null}}"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        assert!(parsed.quote_summary.unwrap().result.is_none());
+    }
+
+    #[test]
+    fn test_fundamentals_json_null_quote_summary() {
+        let json = r#"{"quoteSummary": null}"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        assert!(parsed.quote_summary.is_none());
+    }
+
+    #[test]
+    fn test_fundamentals_json_missing_pe_gives_none() {
+        let json = r#"{
+            "quoteSummary": {
+                "result": [{
+                    "defaultKeyStatistics": {},
+                    "summaryDetail": {
+                        "dividendYield": {"raw": 0.01, "fmt": "1%"}
+                    },
+                    "price": {}
+                }]
+            }
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let results = parsed.quote_summary.unwrap().result.unwrap();
+        let sd = results[0].summary_detail.as_ref().unwrap();
+        assert!(sd.trailing_pe.is_none());
+    }
+
+    #[test]
+    fn test_fundamentals_json_yahoo_value_raw_present() {
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {"beta": {"raw": 1.35, "fmt": "1.35"}},
+                "summaryDetail": {},
+                "price": {}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let ks = parsed.quote_summary.unwrap().result.unwrap()
+            .into_iter().next().unwrap()
+            .default_key_statistics.unwrap();
+        assert!(approx_eq(ks.beta.unwrap().raw.unwrap(), 1.35));
+    }
+
+    #[test]
+    fn test_fundamentals_json_yahoo_value_null_raw() {
+        // Yahoo sometimes returns {"raw": null, "fmt": "N/A"} for unavailable values
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {"beta": {"raw": null, "fmt": "N/A"}},
+                "summaryDetail": {},
+                "price": {}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let ks = parsed.quote_summary.unwrap().result.unwrap()
+            .into_iter().next().unwrap()
+            .default_key_statistics.unwrap();
+        assert!(ks.beta.unwrap().raw.is_none());
+    }
+
+    #[test]
+    fn test_fundamentals_json_market_cap_in_price_module() {
+        // Verify the price.marketCap field deserializes correctly as a fallback source
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {},
+                "summaryDetail": {},
+                "price": {"marketCap": {"raw": 500000000000.0, "fmt": "500B"}}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let result = &parsed.quote_summary.unwrap().result.unwrap()[0];
+        assert!(result.summary_detail.as_ref().unwrap().market_cap.is_none());
+        let cap = result.price.as_ref().unwrap()
+            .market_cap.as_ref().unwrap().raw.unwrap();
+        assert!(approx_eq(cap, 500_000_000_000.0));
+    }
+
+    #[test]
+    fn test_fundamentals_json_missing_all_optional_fields() {
+        // Empty modules → all fields None, should not panic
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {},
+                "summaryDetail": {},
+                "price": {}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let result = &parsed.quote_summary.unwrap().result.unwrap()[0];
+        let ks = result.default_key_statistics.as_ref().unwrap();
+        assert!(ks.beta.is_none());
+        assert!(ks.trailing_eps.is_none());
+        assert!(ks.price_to_book.is_none());
+        let sd = result.summary_detail.as_ref().unwrap();
+        assert!(sd.trailing_pe.is_none());
+        assert!(sd.dividend_yield.is_none());
+        assert!(sd.market_cap.is_none());
+    }
+
+    // ---- Performance ----
+
+    #[test]
+    fn test_url_construction_performance_500_symbols() {
+        use std::time::Instant;
+        let symbols: Vec<String> = (0..500).map(|i| format!("S{i:03}")).collect();
+        let start = Instant::now();
+        for sym in &symbols {
+            let _ = build_chart_url(sym);
+            let _ = build_fundamentals_url(sym, "test-crumb");
+        }
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 50,
+            "URL construction for 500 symbols took {}ms, expected < 50ms",
+            elapsed.as_millis()
+        );
+    }
+
+    #[test]
+    fn test_chart_json_parsing_performance_500_responses() {
+        use std::time::Instant;
+        let json = r#"{
+            "chart": {"result": [{
+                "meta": {
+                    "regularMarketPrice": 150.25,
+                    "chartPreviousClose": 147.50,
+                    "regularMarketVolume": 75000000
+                }
+            }]}
+        }"#;
+        let start = Instant::now();
+        for _ in 0..500 {
+            let _: ChartResponse = serde_json::from_str(json).unwrap();
+        }
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 500,
+            "Parsing 500 chart responses took {}ms, expected < 500ms",
+            elapsed.as_millis()
+        );
+    }
+
+    #[test]
+    fn test_fundamentals_json_parsing_performance_500_responses() {
+        use std::time::Instant;
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {
+                    "beta": {"raw": 1.2, "fmt": "1.20"},
+                    "trailingEps": {"raw": 6.05, "fmt": "6.05"},
+                    "priceToBook": {"raw": 8.5, "fmt": "8.50"}
+                },
+                "summaryDetail": {
+                    "trailingPE": {"raw": 28.5, "fmt": "28.50"},
+                    "dividendYield": {"raw": 0.006, "fmt": "0.60%"},
+                    "fiftyTwoWeekHigh": {"raw": 198.23, "fmt": "198.23"},
+                    "fiftyTwoWeekLow": {"raw": 124.17, "fmt": "124.17"},
+                    "averageVolume10days": {"raw": 55000000.0, "fmt": "55M"},
+                    "marketCap": {"raw": 2400000000000.0, "fmt": "2.4T"}
+                },
+                "price": {"marketCap": {"raw": 2400000000000.0, "fmt": "2.4T"}}
+            }]}
+        }"#;
+        let start = Instant::now();
+        for _ in 0..500 {
+            let _: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        }
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 500,
+            "Parsing 500 fundamentals responses took {}ms, expected < 500ms",
+            elapsed.as_millis()
+        );
+    }
 }

@@ -282,6 +282,25 @@ pub async fn get_sector_outliers(
     outlier_detection::detect_sector_outliers(&db.0, sector_id, threshold, universe_str).await
 }
 
+/// Map a Yahoo Finance sector name to the matching DB sector name.
+/// Yahoo Finance uses different labels than GICS (e.g. "Healthcare" vs "Health Care").
+fn map_yahoo_sector_to_db(yahoo_sector: &str) -> Option<&'static str> {
+    match yahoo_sector {
+        "Technology" => Some("Technology"),
+        "Healthcare" => Some("Health Care"),
+        "Financial Services" => Some("Financials"),
+        "Consumer Cyclical" => Some("Consumer Discretionary"),
+        "Communication Services" => Some("Communication Services"),
+        "Industrials" => Some("Industrials"),
+        "Consumer Defensive" => Some("Consumer Staples"),
+        "Energy" => Some("Energy"),
+        "Utilities" => Some("Utilities"),
+        "Real Estate" => Some("Real Estate"),
+        "Basic Materials" => Some("Materials"),
+        _ => None,
+    }
+}
+
 // -- Russell 2000 Universe Command --
 
 #[tauri::command]
@@ -311,7 +330,15 @@ pub async fn refresh_russell_2000_data(
         .await
         .map_err(|e| format!("Yahoo Finance auth failed: {e}"))?;
 
-    // Step 3: Fetch market data for all Russell 2000 stocks
+    // Step 3: Build sector name → id map for assigning sectors to unclassified stocks
+    let sector_rows: Vec<(i32, String)> = sqlx::query_as("SELECT id, name FROM sectors")
+        .fetch_all(&db.0)
+        .await
+        .map_err(|e| format!("Failed to fetch sectors: {e}"))?;
+    let sector_map: std::collections::HashMap<String, i32> =
+        sector_rows.into_iter().map(|(id, name)| (name, id)).collect();
+
+    // Step 4: Fetch market data for all Russell 2000 stocks
     let stocks: Vec<Stock> = sqlx::query_as(
         "SELECT s.id, s.symbol, s.name, s.sector_id
          FROM stocks s
@@ -336,6 +363,23 @@ pub async fn refresh_russell_2000_data(
 
         match market_data::fetch_stock_quote(&client, &session, stock.id, &stock.symbol).await {
             Ok(quote) => {
+                // Assign sector_id from Yahoo Finance data for unclassified stocks
+                if stock.sector_id.is_none() {
+                    if let Some(ref yahoo_sector) = quote.yahoo_sector {
+                        if let Some(db_name) = map_yahoo_sector_to_db(yahoo_sector) {
+                            if let Some(&sector_id) = sector_map.get(db_name) {
+                                let _ = sqlx::query(
+                                    "UPDATE stocks SET sector_id = ? WHERE id = ? AND sector_id IS NULL",
+                                )
+                                .bind(sector_id)
+                                .bind(stock.id)
+                                .execute(&db.0)
+                                .await;
+                            }
+                        }
+                    }
+                }
+
                 if let Err(e) = market_data::save_quote(&db.0, &quote).await {
                     eprintln!("Failed to save {}: {e}", stock.symbol);
                     error_count += 1;

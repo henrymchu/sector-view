@@ -70,6 +70,7 @@ struct SummaryDetail {
 #[serde(rename_all = "camelCase")]
 struct PriceData {
     market_cap: Option<YahooValue>,
+    sector: Option<String>,
 }
 
 /// Yahoo Finance wraps many values in {"raw": 123.45, "fmt": "123.45"}
@@ -165,6 +166,9 @@ pub struct StockQuote {
     pub beta: Option<f64>,
     pub week52_high: Option<f64>,
     pub week52_low: Option<f64>,
+    /// Sector string as returned by Yahoo Finance (e.g. "Technology", "Healthcare").
+    /// Only populated when explicitly needed; use `map_yahoo_sector_to_db` to convert.
+    pub yahoo_sector: Option<String>,
 }
 
 /// Fetch price data from Yahoo Finance chart API.
@@ -210,6 +214,7 @@ async fn fetch_chart_data(
 }
 
 /// Fetch fundamental data from Yahoo Finance quoteSummary API.
+/// Returns (pe_ratio, pb_ratio, market_cap, eps, dividend_yield, beta, avg_volume_10d, week52_high, week52_low, sector).
 async fn fetch_fundamentals(
     session: &YahooSession,
     symbol: &str,
@@ -223,6 +228,7 @@ async fn fetch_fundamentals(
     Option<i64>,
     Option<f64>,
     Option<f64>,
+    Option<String>,
 ) {
     let url = build_fundamentals_url(symbol, &session.crumb);
 
@@ -232,12 +238,12 @@ async fn fetch_fundamentals(
         .await
     {
         Ok(r) if r.status().is_success() => r,
-        _ => return (None, None, None, None, None, None, None, None, None),
+        _ => return (None, None, None, None, None, None, None, None, None, None),
     };
 
     let data: QuoteSummaryResponse = match resp.json().await {
         Ok(d) => d,
-        Err(_) => return (None, None, None, None, None, None, None, None, None),
+        Err(_) => return (None, None, None, None, None, None, None, None, None, None),
     };
 
     let result = match data
@@ -246,7 +252,7 @@ async fn fetch_fundamentals(
         .and_then(|r| r.into_iter().next())
     {
         Some(r) => r,
-        None => return (None, None, None, None, None, None, None, None, None),
+        None => return (None, None, None, None, None, None, None, None, None, None),
     };
 
     let pe_ratio = result
@@ -304,6 +310,11 @@ async fn fetch_fundamentals(
         .and_then(|sd| sd.fifty_two_week_low.as_ref())
         .and_then(|v| v.raw);
 
+    let sector = result
+        .price
+        .as_ref()
+        .and_then(|p| p.sector.clone());
+
     (
         pe_ratio,
         pb_ratio,
@@ -314,6 +325,7 @@ async fn fetch_fundamentals(
         avg_volume_10d,
         week52_high,
         week52_low,
+        sector,
     )
 }
 
@@ -328,7 +340,7 @@ pub async fn fetch_stock_quote(
 
     let (price_change, price_change_percent) = calculate_price_change(price, prev_close);
 
-    let (pe_ratio, pb_ratio, market_cap, eps, dividend_yield, beta, avg_volume_10d, week52_high, week52_low) =
+    let (pe_ratio, pb_ratio, market_cap, eps, dividend_yield, beta, avg_volume_10d, week52_high, week52_low, yahoo_sector) =
         fetch_fundamentals(session, symbol).await;
 
     Ok(StockQuote {
@@ -346,6 +358,7 @@ pub async fn fetch_stock_quote(
         beta,
         week52_high,
         week52_low,
+        yahoo_sector,
     })
 }
 

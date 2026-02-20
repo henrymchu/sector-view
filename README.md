@@ -87,3 +87,29 @@ sector-view/
 - **Frontend:** React 19, TypeScript 5.8, Vite 7
 - **Backend:** Rust, Tauri 2, SQLx (SQLite), Tokio, Reqwest
 - **Data:** Yahoo Finance API, local SQLite database
+
+## Important Disclaimer
+
+**⚠️ For Educational and Research Purposes Only**
+
+GICS Intelligence is an analytical tool designed to help identify statistical anomalies in financial data. The outlier detection and analysis features are intended as **starting points for your own research**, not as investment recommendations.
+
+### Key Points:
+
+- **Not Financial Advice**: This app does not provide investment, financial, or trading advice
+- **Research Tool**: Outlier suggestions should prompt further investigation, not immediate investment decisions  
+- **Do Your Own Research**: Always conduct thorough fundamental analysis, read financial statements, and understand the business before investing
+- **Risk Awareness**: All investments carry risk, and statistical outliers may indicate both opportunities and risks
+- **Data Limitations**: Market data may be delayed, incomplete, or subject to errors
+
+### Recommended Workflow:
+
+1. **Use the app** to identify statistically interesting stocks
+2. **Research thoroughly** - read annual reports, earnings calls, industry analysis  
+3. **Understand the business** - products, competitive position, management quality
+4. **Consider multiple factors** - not just statistical metrics
+5. **Consult professionals** if needed for significant investment decisions
+
+**Remember:** A stock being a statistical outlier doesn't automatically make it a good or bad investment. Market conditions, company fundamentals, and your personal financial situation should all factor into investment decisions.
+
+**Invest responsibly.**

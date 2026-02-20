@@ -1352,6 +1352,210 @@
           }
         },
         {
+          "id": "US019",
+          "title": "As a developer, I want comprehensive unit tests for stock discovery functionality",
+          "description": "Ensure stock discovery from Wikipedia and sector mapping logic are robust and reliable",
+          "acceptance_criteria": [
+            "Sector name mapping correctly transforms Wikipedia names to internal symbols",
+            "Wikipedia HTML table parsing handles various table formats and edge cases",
+            "Mock Wikipedia responses produce expected stock lists",
+            "Error handling works for malformed HTML, missing columns, network failures",
+            "Sector mapping handles case variations and alternate naming conventions",
+            "Performance tests ensure parsing completes within acceptable time limits",
+            "Test coverage > 90% for stock_discovery.rs module"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US005"],
+          "status": "Not Started",
+          "implementation_details": {
+            "testing_framework": {
+              "rust_testing": "Built-in Rust testing with #[cfg(test)] modules in stock_discovery.rs",
+              "additional_crates": [
+                "scraper = \"0.20\" # HTML parsing testing",
+                "mockito = \"1.0\" # HTTP mocking for Wikipedia responses"
+              ],
+              "test_organization": "Tests in src/stock_discovery.rs with #[cfg(test)] mod tests"
+            },
+            "sector_mapping_testing": {
+              "mapping_correctness": {
+                "test_cases": [
+                  "\"Information Technology\" → \"XLK\"",
+                  "\"Health Care\" → \"XLV\"", 
+                  "\"Financials\" → \"XLF\"",
+                  "\"Consumer Discretionary\" → \"XLY\"",
+                  "\"Communication Services\" → \"XLC\"",
+                  "\"Industrials\" → \"XLI\"",
+                  "\"Consumer Staples\" → \"XLP\"",
+                  "\"Energy\" → \"XLE\"",
+                  "\"Utilities\" → \"XLU\"",
+                  "\"Real Estate\" → \"XLRE\"",
+                  "\"Materials\" → \"XLB\""
+                ],
+                "implementation_example": [
+                  "#[test]",
+                  "fn test_sector_name_mapping() {",
+                  "    assert_eq!(map_sector_name(\"Information Technology\"), Some(\"XLK\".to_string()));",
+                  "    assert_eq!(map_sector_name(\"Health Care\"), Some(\"XLV\".to_string()));",
+                  "    assert_eq!(map_sector_name(\"Unknown Sector\"), None);",
+                  "}"
+                ]
+              },
+              "edge_cases": {
+                "case_variations": [
+                  "\"information technology\" → \"XLK\" (lowercase)",
+                  "\"INFORMATION TECHNOLOGY\" → \"XLK\" (uppercase)",
+                  "\"Information  Technology\" → \"XLK\" (extra spaces)"
+                ],
+                "alternate_names": [
+                  "\"IT\" → \"XLK\" (abbreviation)",
+                  "\"Tech\" → \"XLK\" (common shorthand)",
+                  "\"Healthcare\" → \"XLV\" (one word vs two)"
+                ],
+                "unmapped_sectors": "Return None for unrecognized sector names"
+              }
+            },
+            "wikipedia_parsing_testing": {
+              "html_fixtures": {
+                "valid_table": [
+                  "Mock HTML with proper S&P 500 table structure:",
+                  "<table class=\"wikitable\">",
+                  "<tr><th>Symbol</th><th>Security</th><th>GICS Sector</th></tr>",
+                  "<tr><td>AAPL</td><td>Apple Inc.</td><td>Information Technology</td></tr>",
+                  "<tr><td>MSFT</td><td>Microsoft Corporation</td><td>Information Technology</td></tr>",
+                  "</table>"
+                ],
+                "expected_output": [
+                  "Vec<Stock> with:",
+                  "Stock { symbol: \"AAPL\", name: \"Apple Inc.\", sector_symbol: \"XLK\" }",
+                  "Stock { symbol: \"MSFT\", name: \"Microsoft Corporation\", sector_symbol: \"XLK\" }"
+                ]
+              },
+              "parsing_scenarios": [
+                {
+                  "description": "Standard Wikipedia S&P 500 table",
+                  "html_structure": "Standard wikitable with Symbol, Security, GICS Sector columns",
+                  "expected_count": "~500 stocks parsed correctly"
+                },
+                {
+                  "description": "Table with extra columns",
+                  "html_structure": "Additional columns like Date Added, Market Cap, etc.",
+                  "expected_behavior": "Parse correctly, ignore extra columns"
+                },
+                {
+                  "description": "Malformed table rows",
+                  "html_structure": "Missing cells, empty rows, header variations",
+                  "expected_behavior": "Skip malformed rows, continue parsing valid ones"
+                },
+                {
+                  "description": "Special characters in company names",
+                  "html_structure": "Names with &amp;, quotes, unicode characters",
+                  "expected_behavior": "Properly decode HTML entities"
+                }
+              ]
+            },
+            "http_mocking": {
+              "mock_wikipedia_responses": {
+                "successful_response": [
+                  "Mock HTTP 200 with valid S&P 500 Wikipedia HTML",
+                  "Test full parsing pipeline from HTTP request to Stock list"
+                ],
+                "network_failures": [
+                  "Mock HTTP 404, 500, timeout errors",
+                  "Ensure graceful error handling and fallback behavior"
+                ],
+                "malformed_responses": [
+                  "Mock response with invalid HTML",
+                  "Response with no tables found", 
+                  "Response with tables but wrong structure"
+                ]
+              },
+              "mockito_usage": [
+                "#[test]",
+                "fn test_fetch_sp500_success() {",
+                "    let _m = mockito::mock(\"GET\", \"/wiki/List_of_S%26P_500_companies\")",
+                "        .with_status(200)",
+                "        .with_header(\"content-type\", \"text/html\")",
+                "        .with_body(MOCK_WIKIPEDIA_HTML)",
+                "        .create();",
+                "    ",
+                "    let result = fetch_sp500_constituents().await;",
+                "    assert!(result.is_ok());",
+                "    assert_eq!(result.unwrap().len(), 2); // Based on mock data",
+                "}"
+              ]
+            },
+            "error_handling_testing": {
+              "parsing_errors": [
+                "HTML with no tables → return empty Vec",
+                "Tables with missing required columns → skip those rows",
+                "Invalid sector names → map to None, handle gracefully"
+              ],
+              "network_errors": [
+                "HTTP timeout → return appropriate error",
+                "DNS failure → return network error",
+                "Invalid URL → return URL error"
+              ],
+              "data_validation": [
+                "Empty stock symbol → skip row", 
+                "Duplicate symbols → handle appropriately",
+                "Invalid characters in symbols → sanitize or skip"
+              ]
+            },
+            "performance_testing": {
+              "parsing_benchmarks": [
+                "Parse mock HTML with 500 stocks < 100ms",
+                "Sector mapping for 500 stocks < 10ms",
+                "Memory usage reasonable for large HTML responses"
+              ],
+              "stress_testing": [
+                "Large HTML documents (multiple MB)",
+                "Tables with thousands of rows",
+                "Malformed HTML with deeply nested structures"
+              ]
+            },
+            "integration_testing": {
+              "end_to_end_pipeline": [
+                "Mock Wikipedia → Parse HTML → Map sectors → Return Stock list",
+                "Verify integration with database insertion logic",
+                "Test with real Wikipedia structure (sample, not live calls)"
+              ]
+            },
+            "test_data_fixtures": {
+              "wikipedia_html_samples": [
+                "MOCK_SP500_STANDARD: Standard table with ~10 stocks",
+                "MOCK_SP500_MALFORMED: Missing cells, extra columns",
+                "MOCK_SP500_SPECIAL_CHARS: Companies with &, quotes, unicode",
+                "MOCK_SP500_EMPTY: Valid HTML but no stock data"
+              ],
+              "expected_results": [
+                "Pre-defined Stock structs for each mock HTML fixture",
+                "Expected sector mappings for test verification",
+                "Error cases with expected error types"
+              ]
+            },
+            "regression_testing": {
+              "wikipedia_format_changes": [
+                "Test against archived Wikipedia HTML from different dates",
+                "Ensure parsing remains robust to minor format changes",
+                "Document assumptions about Wikipedia table structure"
+              ]
+            },
+            "validation_steps": [
+              "All sector name mappings work correctly for GICS standard names",
+              "Wikipedia table parsing handles standard S&P 500 table format",
+              "Mock HTML fixtures produce expected Stock lists",
+              "Error handling gracefully manages malformed HTML and network issues",
+              "Case variations and alternate sector names map correctly",
+              "Performance tests complete within acceptable time limits",
+              "HTTP mocking properly simulates Wikipedia responses",
+              "Edge cases (empty tables, missing columns) handled appropriately",
+              "Test coverage exceeds 90% for stock discovery module",
+              "Integration tests verify end-to-end stock discovery pipeline"
+            ]
+          }
+        },
+        {
           "id": "US009",
           "title": "As a user, I want to see comprehensive outlier analysis dashboard",
           "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
@@ -1971,7 +2175,7 @@
       "name": "Alpha Release",
       "target_date": "2025-03-01", 
       "description": "Working outlier detection with real data",
-      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US009"],
+      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US009"],
       "status": "Planned"
     },
     {
@@ -2048,6 +2252,12 @@
       "impact": "High",
       "probability": "Low",
       "mitigation": "Comprehensive unit testing, property-based testing, manual verification of calculations"
+    },
+    {
+      "risk": "Wikipedia Format Changes Breaking Stock Discovery",
+      "impact": "Medium",
+      "probability": "Medium",
+      "mitigation": "Comprehensive parsing tests, mock HTML fixtures, robust error handling, fallback data sources"
     }
   ],
   "notes": {

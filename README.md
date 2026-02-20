@@ -2,9 +2,13 @@
 
 A macOS desktop app for tracking sector performance and detecting statistical outliers across all 11 GICS sectors. Supports both the S&P 500 (large-cap) and Russell 2000 (small-cap) universes. Built with Tauri 2, React 19, and Rust.
 
-## Screenshots
+## Demo
 
-![Sector grid with GICS header card and per-sector metrics](docs/GICS_Intelligence_Top.png)
+![GICS Intelligence Universe Toggle Animation](docs/GICS_Intelligence_Top.gif)
+
+*Switch between S&P 500 (large-cap) and Russell 2000 (small-cap) universes with smooth flip animations and themed UI*
+
+## Screenshots
 
 ![Outlier analysis dashboard with Z-score rankings and filters](docs/GICS_Intelligence_Bottom.png)
 

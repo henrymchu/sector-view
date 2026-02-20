@@ -44,6 +44,7 @@ struct QuoteSummaryData {
     default_key_statistics: Option<KeyStatistics>,
     summary_detail: Option<SummaryDetail>,
     price: Option<PriceData>,
+    asset_profile: Option<AssetProfile>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,6 +71,10 @@ struct SummaryDetail {
 #[serde(rename_all = "camelCase")]
 struct PriceData {
     market_cap: Option<YahooValue>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AssetProfile {
     sector: Option<String>,
 }
 
@@ -92,7 +97,7 @@ fn build_chart_url(symbol: &str) -> String {
 /// Build the Yahoo Finance quoteSummary API URL for a given symbol and crumb.
 fn build_fundamentals_url(symbol: &str, crumb: &str) -> String {
     format!(
-        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price&crumb={}",
+        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=defaultKeyStatistics,summaryDetail,price,assetProfile&crumb={}",
         symbol, crumb
     )
 }
@@ -311,9 +316,9 @@ async fn fetch_fundamentals(
         .and_then(|v| v.raw);
 
     let sector = result
-        .price
+        .asset_profile
         .as_ref()
-        .and_then(|p| p.sector.clone());
+        .and_then(|ap| ap.sector.clone());
 
     (
         pe_ratio,
@@ -445,6 +450,7 @@ mod tests {
         assert!(url.contains("defaultKeyStatistics"), "Missing module: {url}");
         assert!(url.contains("summaryDetail"), "Missing module: {url}");
         assert!(url.contains("price"), "Missing module: {url}");
+        assert!(url.contains("assetProfile"), "Missing module: {url}");
     }
 
     #[test]
@@ -740,6 +746,36 @@ mod tests {
         assert!(sd.trailing_pe.is_none());
         assert!(sd.dividend_yield.is_none());
         assert!(sd.market_cap.is_none());
+    }
+
+    #[test]
+    fn test_fundamentals_json_asset_profile_sector() {
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {},
+                "summaryDetail": {},
+                "price": {},
+                "assetProfile": {"sector": "Technology"}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let result = &parsed.quote_summary.unwrap().result.unwrap()[0];
+        let sector = result.asset_profile.as_ref().and_then(|ap| ap.sector.as_deref());
+        assert_eq!(sector, Some("Technology"));
+    }
+
+    #[test]
+    fn test_fundamentals_json_asset_profile_missing_gives_none() {
+        let json = r#"{
+            "quoteSummary": {"result": [{
+                "defaultKeyStatistics": {},
+                "summaryDetail": {},
+                "price": {}
+            }]}
+        }"#;
+        let parsed: QuoteSummaryResponse = serde_json::from_str(json).unwrap();
+        let result = &parsed.quote_summary.unwrap().result.unwrap()[0];
+        assert!(result.asset_profile.is_none());
     }
 
     // ---- Performance ----

@@ -1792,6 +1792,281 @@
           }
         },
         {
+          "id": "US021",
+          "title": "As a developer, I want comprehensive unit tests for React components",
+          "description": "Ensure React components render correctly and handle all data states using Vitest and React Testing Library",
+          "acceptance_criteria": [
+            "SectorGrid renders correct number of sector cards based on data",
+            "SectorCard displays sector information properly with various data states",
+            "Components handle null/undefined data gracefully (show N/A, loading states)",
+            "User interactions work correctly (clicks, hover states, refresh buttons)",
+            "Snapshot tests catch unintended UI changes",
+            "Error states render appropriate fallback UI",
+            "Test coverage > 85% for React components"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US002", "US003"],
+          "status": "Not Started",
+          "implementation_details": {
+            "testing_framework": {
+              "primary_tools": [
+                "Vitest - Fast unit test runner (integrates with Vite)",
+                "React Testing Library - Component testing utilities", 
+                "jsdom - DOM environment for testing"
+              ],
+              "package_dependencies": [
+                "@testing-library/react - React component testing",
+                "@testing-library/jest-dom - Additional matchers",
+                "@testing-library/user-event - User interaction simulation",
+                "vitest - Test runner and assertions"
+              ],
+              "configuration": {
+                "vitest.config.ts": "Configure test environment, setup files, coverage",
+                "test_setup": "src/test/setup.ts - Global test configuration and mocks"
+              }
+            },
+            "sectorcard_testing": {
+              "component_structure": "SectorCard.tsx - Individual sector display component",
+              "test_scenarios": {
+                "complete_data": {
+                  "description": "Sector with all data fields populated",
+                  "mock_data": {
+                    "sector": "{ id: 1, name: 'Information Technology', symbol: 'XLK' }",
+                    "metrics": "{ priceChange: 2.1, avgPE: 28.5, marketCap: 12500000000, outlierCount: 8 }"
+                  },
+                  "expected_behavior": [
+                    "Displays sector name 'Information Technology'",
+                    "Shows symbol '(XLK)'",
+                    "Renders price change '+2.1%' with appropriate color",
+                    "Shows avg P/E ratio '28.5'", 
+                    "Displays outlier count '8 outliers'"
+                  ]
+                },
+                "missing_data": {
+                  "description": "Sector with null/undefined metrics",
+                  "mock_data": {
+                    "sector": "{ id: 1, name: 'Technology', symbol: 'XLK' }",
+                    "metrics": "{ priceChange: null, avgPE: undefined, marketCap: 0, outlierCount: null }"
+                  },
+                  "expected_behavior": [
+                    "Shows 'N/A' for missing price change",
+                    "Shows '--' for missing P/E ratio",
+                    "Shows 'No outliers' when outlierCount is null"
+                  ]
+                },
+                "loading_state": {
+                  "description": "Sector card while data is being fetched",
+                  "mock_data": "{ loading: true, sector: {...}, metrics: null }",
+                  "expected_behavior": [
+                    "Shows skeleton loading animation",
+                    "Displays sector name but placeholder metrics",
+                    "Refresh button shows spinner"
+                  ]
+                },
+                "error_state": {
+                  "description": "Sector card when data fetch fails",
+                  "mock_data": "{ error: 'Failed to load sector data', sector: {...} }",
+                  "expected_behavior": [
+                    "Shows error message or icon",
+                    "Maintains basic sector info", 
+                    "Provides retry mechanism"
+                  ]
+                }
+              },
+              "interaction_testing": {
+                "click_events": [
+                  "Card click triggers sector selection/navigation",
+                  "Mini refresh button triggers sector-specific refresh",
+                  "Hover states show additional information"
+                ],
+                "test_implementation": [
+                  "test('handles sector card click', async () => {",
+                  "  const onSectorClick = vi.fn();",
+                  "  render(<SectorCard sector={mockSector} onSelect={onSectorClick} />);",
+                  "  ",
+                  "  await user.click(screen.getByRole('button'));",
+                  "  expect(onSectorClick).toHaveBeenCalledWith(mockSector.id);",
+                  "});"
+                ]
+              }
+            },
+            "sectorgrid_testing": {
+              "component_structure": "SectorGrid.tsx - Grid container managing multiple SectorCard components",
+              "test_scenarios": {
+                "full_sector_data": {
+                  "description": "Grid with all 11 GICS sectors",
+                  "mock_data": "Array of 11 sector objects with complete data",
+                  "expected_behavior": [
+                    "Renders exactly 11 SectorCard components",
+                    "Grid layout responsive (4 cols → 3 → 2 → 1)",
+                    "All sectors display correctly"
+                  ]
+                },
+                "empty_data": {
+                  "description": "Grid with no sector data",
+                  "mock_data": "Empty array or null sectors",
+                  "expected_behavior": [
+                    "Shows 'No sectors available' message",
+                    "Displays loading state if appropriate",
+                    "Provides refresh option"
+                  ]
+                },
+                "partial_data": {
+                  "description": "Some sectors loaded, others still loading",
+                  "mock_data": "Mix of complete sectors and loading states",
+                  "expected_behavior": [
+                    "Renders available sectors immediately",
+                    "Shows loading placeholders for pending sectors",
+                    "Updates progressively as data arrives"
+                  ]
+                },
+                "responsive_layout": {
+                  "description": "Grid adapts to different screen sizes",
+                  "test_approach": [
+                    "Mock different viewport sizes",
+                    "Verify CSS grid column changes",
+                    "Test breakpoint behavior"
+                  ]
+                }
+              },
+              "integration_testing": {
+                "data_flow": [
+                  "SectorGrid receives sector data → passes to SectorCard components",
+                  "Refresh triggers → propagates to all cards",
+                  "Error in one sector → doesn't break entire grid"
+                ],
+                "tauri_integration": [
+                  "Mock Tauri invoke calls for getSectors()",
+                  "Test error handling when Tauri commands fail",
+                  "Verify loading states during async operations"
+                ]
+              }
+            },
+            "snapshot_testing": {
+              "strategy": "Capture component output HTML to catch unintended changes",
+              "snapshot_scenarios": [
+                "SectorCard with complete data",
+                "SectorCard with missing/null data",
+                "SectorCard in loading state",
+                "SectorCard in error state",
+                "SectorGrid with 11 sectors",
+                "SectorGrid with no data",
+                "SectorGrid responsive layouts"
+              ],
+              "implementation_example": [
+                "test('SectorCard matches snapshot with complete data', () => {",
+                "  const { container } = render(",
+                "    <SectorCard ",
+                "      sector={mockCompleteSector} ",
+                "      metrics={mockCompleteMetrics}",
+                "    />",
+                "  );",
+                "  expect(container.firstChild).toMatchSnapshot();",
+                "});"
+              ],
+              "snapshot_maintenance": [
+                "Review snapshot changes during development",
+                "Update snapshots when intentional UI changes occur",
+                "Use descriptive snapshot names for clarity"
+              ]
+            },
+            "mock_data_strategy": {
+              "test_fixtures": {
+                "src/test/fixtures/sectors.ts": "Mock sector data for consistent testing",
+                "mock_examples": [
+                  "export const mockTechnologySector = {",
+                  "  id: 1,",
+                  "  name: 'Information Technology',",
+                  "  symbol: 'XLK'",
+                  "};",
+                  "",
+                  "export const mockSectorMetrics = {",
+                  "  priceChange: 2.1,",
+                  "  avgPE: 28.5,",
+                  "  marketCap: 12500000000,",
+                  "  outlierCount: 8",
+                  "};"
+                ]
+              },
+              "tauri_mocking": {
+                "mock_tauri_commands": [
+                  "vi.mock('@tauri-apps/api/tauri', () => ({",
+                  "  invoke: vi.fn().mockImplementation((cmd) => {",
+                  "    if (cmd === 'get_sectors') return Promise.resolve(mockSectors);",
+                  "    if (cmd === 'refresh_sector_data') return Promise.resolve('success');",
+                  "    return Promise.reject('Unknown command');",
+                  "  })",
+                  "}));"
+                ]
+              }
+            },
+            "accessibility_testing": {
+              "aria_labels": [
+                "Sector cards have proper ARIA labels",
+                "Loading states announced to screen readers",
+                "Error messages are accessible"
+              ],
+              "keyboard_navigation": [
+                "Tab navigation works through sector cards",
+                "Enter/Space trigger appropriate actions",
+                "Focus indicators visible"
+              ]
+            },
+            "performance_testing": {
+              "render_performance": [
+                "Large grids (100+ sectors) render smoothly",
+                "Component re-renders minimized during data updates",
+                "Memory usage reasonable during testing"
+              ]
+            },
+            "error_boundary_testing": {
+              "component_errors": [
+                "Test error boundary wrapping SectorGrid",
+                "Verify graceful degradation when components crash",
+                "Error reporting and recovery mechanisms"
+              ]
+            },
+            "test_organization": {
+              "file_structure": [
+                "src/components/__tests__/SectorCard.test.tsx",
+                "src/components/__tests__/SectorGrid.test.tsx", 
+                "src/test/setup.ts - Global test configuration",
+                "src/test/fixtures/ - Mock data and utilities"
+              ],
+              "test_naming": [
+                "Descriptive test names: 'renders N/A when priceChange is null'",
+                "Group related tests with describe() blocks",
+                "Use beforeEach for common setup"
+              ]
+            },
+            "continuous_integration": {
+              "test_commands": [
+                "npm test - Run all tests",
+                "npm run test:coverage - Generate coverage report",
+                "npm run test:ui - Interactive test UI"
+              ],
+              "coverage_targets": [
+                "Components: > 85% line coverage",
+                "Critical paths: > 95% coverage",
+                "Integration scenarios: > 80% coverage"
+              ]
+            },
+            "validation_steps": [
+              "SectorGrid renders correct number of cards based on input data",
+              "SectorCard displays all metrics properly when data is complete",
+              "Components show appropriate N/A or placeholder text for missing data",
+              "Loading states render correctly during async operations",
+              "Error states display helpful messages and recovery options",
+              "User interactions (clicks, hovers) work as expected",
+              "Snapshot tests catch unintended visual changes",
+              "Accessibility features work correctly (ARIA, keyboard nav)",
+              "Test coverage exceeds 85% for React components",
+              "All tests pass in CI environment"
+            ]
+          }
+        },
+        {
           "id": "US009",
           "title": "As a user, I want to see comprehensive outlier analysis dashboard",
           "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
@@ -2411,7 +2686,7 @@
       "name": "Alpha Release",
       "target_date": "2025-03-01", 
       "description": "Working outlier detection with real data",
-      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US020", "US009"],
+      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US020", "US021", "US009"],
       "status": "Planned"
     },
     {
@@ -2500,6 +2775,12 @@
       "impact": "High",
       "probability": "Medium",
       "mitigation": "Comprehensive JSON parsing tests, fixture data versioning, robust error handling, alternative data sources"
+    },
+    {
+      "risk": "Frontend Component Reliability",
+      "impact": "Medium",
+      "probability": "Low",
+      "mitigation": "Comprehensive React component testing with Vitest, snapshot tests, behavior tests, accessibility testing"
     }
   ],
   "notes": {

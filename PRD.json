@@ -1191,6 +1191,167 @@
           }
         },
         {
+          "id": "US018",
+          "title": "As a developer, I want comprehensive unit tests for outlier detection mathematics",
+          "description": "Ensure statistical calculations are mathematically accurate and reliable through extensive testing",
+          "acceptance_criteria": [
+            "Z-score calculations produce correct results for known inputs",
+            "Composite score (weighted RMS) math is verified against manual calculations",
+            "Outlier classification logic correctly maps Z-scores to OutlierType",
+            "Significance level thresholds (Moderate/Strong/Extreme) work as specified",
+            "Edge cases handled properly (zero std dev, missing data, extreme values)",
+            "Performance tests ensure calculations complete within acceptable time limits",
+            "Test coverage > 90% for outlier_detection.rs module"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 4,
+          "dependencies": ["US008"],
+          "status": "Not Started",
+          "implementation_details": {
+            "testing_framework": {
+              "rust_testing": "Built-in Rust testing with #[cfg(test)] modules",
+              "additional_crates": [
+                "approx = \"0.5\" # For floating-point comparisons",
+                "proptest = \"1.0\" # Property-based testing for edge cases"
+              ],
+              "test_organization": "Tests in src/outlier_detection.rs with #[cfg(test)] mod tests"
+            },
+            "z_score_testing": {
+              "basic_correctness": {
+                "test_cases": [
+                  "Known dataset: mean=10, std_dev=2, value=14 → z=2.0",
+                  "Known dataset: mean=50, std_dev=5, value=40 → z=-2.0", 
+                  "Zero deviation: all values same → z=0.0",
+                  "Negative values: mean=-5, std_dev=3, value=-8 → z=-1.0"
+                ],
+                "implementation": [
+                  "#[test]",
+                  "fn test_z_score_calculation() {",
+                  "    let mean = 10.0;",
+                  "    let std_dev = 2.0;",
+                  "    let value = 14.0;",
+                  "    let expected_z = 2.0;",
+                  "    ",
+                  "    let actual_z = calculate_z_score(value, mean, std_dev);",
+                  "    ",
+                  "    assert!((actual_z - expected_z).abs() < 0.001);",
+                  "}"
+                ]
+              },
+              "edge_cases": {
+                "zero_std_dev": "When all sector values are identical, z-score should be 0.0",
+                "extreme_values": "Very large/small numbers should not cause overflow",
+                "missing_data": "Handle None values gracefully in calculations"
+              }
+            },
+            "composite_score_testing": {
+              "weighted_rms_formula": "composite = sqrt((w1*z1² + w2*z2² + ... + wn*zn²) / sum_of_weights)",
+              "test_scenarios": [
+                {
+                  "description": "Equal weights, simple values",
+                  "input": "z_scores: [1.0, 2.0, -1.0], weights: [1.0, 1.0, 1.0]",
+                  "expected": "sqrt((1² + 4 + 1) / 3) = sqrt(2) ≈ 1.414"
+                },
+                {
+                  "description": "Weighted scenario matching US008",
+                  "input": "pe_z: -2.0 (weight 0.3), pb_z: -1.5 (weight 0.2), price_z: 0.5 (weight 0.3), volume_z: 3.0 (weight 0.2)",
+                  "calculation": "sqrt((0.3*4 + 0.2*2.25 + 0.3*0.25 + 0.2*9) / 1.0)",
+                  "expected": "≈ 2.16"
+                },
+                {
+                  "description": "Missing data scenario",
+                  "input": "pe_z: None, pb_z: -1.0, price_z: 2.0, volume_z: 1.0",
+                  "handling": "Only use available metrics, adjust denominator",
+                  "expected": "sqrt((0.2*1 + 0.3*4 + 0.2*1) / 0.7) ≈ 1.96"
+                }
+              ],
+              "precision_testing": "Verify calculations match manual computation to 0.001 precision"
+            },
+            "outlier_classification_testing": {
+              "classification_rules": {
+                "undervalued": "Low P/E Z-score (-1.5+) AND Low P/B Z-score (-1.5+)",
+                "overvalued": "High P/E Z-score (1.5+) AND High P/B Z-score (1.5+)",
+                "momentum": "High price Z-score (1.5+) AND High volume Z-score (1.5+)",
+                "value_trap": "Low P/E Z-score (-1.5+) AND Low price Z-score (-1.5+)",
+                "mixed": "Doesn't fit clear patterns"
+              },
+              "test_matrix": [
+                "[-2.0, -1.8, 0.2, 0.5] → Undervalued (low P/E, low P/B)",
+                "[2.5, 2.0, -0.5, 0.3] → Overvalued (high P/E, high P/B)", 
+                "[-0.5, 0.2, 2.2, 3.0] → Momentum (high price, high volume)",
+                "[-2.0, 0.5, -1.8, 1.0] → Value Trap (low P/E, poor price)",
+                "[0.5, -0.3, 1.2, -0.8] → Mixed (no clear pattern)"
+              ]
+            },
+            "significance_threshold_testing": {
+              "threshold_definitions": {
+                "moderate": "1.5σ ≤ composite_score < 2.0σ",
+                "strong": "2.0σ ≤ composite_score < 3.0σ", 
+                "extreme": "composite_score ≥ 3.0σ"
+              },
+              "boundary_testing": [
+                "composite_score = 1.49 → Below threshold (not outlier)",
+                "composite_score = 1.50 → Moderate outlier",
+                "composite_score = 1.99 → Moderate outlier",
+                "composite_score = 2.00 → Strong outlier",
+                "composite_score = 2.99 → Strong outlier",
+                "composite_score = 3.00 → Extreme outlier",
+                "composite_score = 5.50 → Extreme outlier"
+              ]
+            },
+            "property_based_testing": {
+              "using_proptest": "Generate random but valid inputs to test edge cases",
+              "properties_to_test": [
+                "Z-score is always finite for finite inputs with non-zero std_dev",
+                "Composite score is always non-negative",
+                "Higher absolute Z-scores produce higher composite scores",
+                "Classification is consistent for identical Z-score patterns"
+              ],
+              "example_property_test": [
+                "#[proptest]",
+                "fn z_score_properties(mean: f64, std_dev in 0.1f64..100.0, value: f64) {",
+                "    let z = calculate_z_score(value, mean, std_dev);",
+                "    ",
+                "    prop_assert!(z.is_finite());",
+                "    prop_assert_eq!(calculate_z_score(mean, mean, std_dev), 0.0);",
+                "}"
+              ]
+            },
+            "integration_testing": {
+              "full_pipeline_tests": [
+                "Load test market data → calculate sector stats → detect outliers → verify end-to-end",
+                "Test with real S&P 500 subset to ensure realistic results",
+                "Performance test: 500 stocks across 11 sectors < 100ms"
+              ]
+            },
+            "test_data_fixtures": {
+              "mock_market_data": [
+                "Technology sector: 5 stocks with known P/E, P/B, prices",
+                "Healthcare sector: Mix of profitable and unprofitable stocks",
+                "Energy sector: High volatility scenario",
+                "Mixed sector: Boundary cases and edge conditions"
+              ],
+              "expected_results": "Pre-calculated expected Z-scores and classifications for fixture data"
+            },
+            "continuous_testing": {
+              "github_actions": "Run tests on every commit and PR",
+              "performance_benchmarks": "Track calculation performance over time",
+              "coverage_reporting": "Ensure comprehensive test coverage"
+            },
+            "validation_steps": [
+              "All Z-score calculations match manual verification",
+              "Composite score formula produces expected results for known inputs",
+              "Outlier classification logic correctly categorizes test cases",
+              "Significance thresholds work at boundary conditions",
+              "Edge cases (zero std_dev, missing data) handled gracefully",
+              "Property-based tests pass for wide range of random inputs",
+              "Performance tests complete within time limits",
+              "Test coverage exceeds 90% for outlier detection module",
+              "Integration tests verify end-to-end mathematical accuracy"
+            ]
+          }
+        },
+        {
           "id": "US009",
           "title": "As a user, I want to see comprehensive outlier analysis dashboard",
           "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
@@ -1206,7 +1367,7 @@
           ],
           "complexity": "Large",
           "estimated_hours": 6,
-          "dependencies": ["US008"],
+          "dependencies": ["US008", "US018"],
           "status": "Not Started",
           "implementation_details": {
             "comprehensive_outlier_display": {
@@ -1810,7 +1971,7 @@
       "name": "Alpha Release",
       "target_date": "2025-03-01", 
       "description": "Working outlier detection with real data",
-      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US009"],
+      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US009"],
       "status": "Planned"
     },
     {
@@ -1881,6 +2042,12 @@
       "impact": "Medium",
       "probability": "Medium",
       "mitigation": "Higher volatility thresholds, robust missing data handling, iShares ETF backup sources"
+    },
+    {
+      "risk": "Mathematical Accuracy in Financial Calculations",
+      "impact": "High",
+      "probability": "Low",
+      "mitigation": "Comprehensive unit testing, property-based testing, manual verification of calculations"
     }
   ],
   "notes": {

@@ -30,9 +30,10 @@
 
 .sector-name {
   margin: 0 0 4px 0;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   color: #1e293b;
+  white-space: nowrap;
 }
 
 .sector-symbol {
@@ -82,6 +83,13 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes cardFlip {
+  0%   { transform: perspective(800px) rotateY(0deg); }
+  45%  { transform: perspective(800px) rotateY(90deg); }
+  55%  { transform: perspective(800px) rotateY(-90deg); }
+  100% { transform: perspective(800px) rotateY(0deg); }
 }
 
 .sector-metrics {

@@ -1,3 +1,4 @@
+import type React from "react";
 import type { SectorSummary, SectorOutliers } from "../types/database";
 import "./SectorCard.css";
 
@@ -7,6 +8,8 @@ interface SectorCardProps {
   sectorRefreshing: boolean;
   anyRefreshing: boolean;
   onSectorRefresh: (symbol: string) => void;
+  isFlipping?: boolean;
+  flipIndex?: number;
 }
 
 function formatPercent(value: number): string {
@@ -33,14 +36,22 @@ function outlierTypeColor(type: string): string {
   }
 }
 
-function SectorCard({ sector, outliers, sectorRefreshing, anyRefreshing, onSectorRefresh }: SectorCardProps) {
+function SectorCard({ sector, outliers, sectorRefreshing, anyRefreshing, onSectorRefresh, isFlipping = false, flipIndex = 0 }: SectorCardProps) {
   const hasData = sector.stock_count > 0 && sector.avg_change_percent !== 0;
   const changeClass = sector.avg_change_percent >= 0 ? "positive" : "negative";
   const outlierCount = outliers?.outlier_count ?? 0;
   const topOutlier = outliers?.outliers[0];
 
+  const flipStyle: React.CSSProperties = isFlipping ? {
+    animationName: "cardFlip",
+    animationDuration: "500ms",
+    animationDelay: `${flipIndex * 50}ms`,
+    animationTimingFunction: "ease-in-out",
+    animationFillMode: "both",
+  } : {};
+
   return (
-    <div className="sector-card" tabIndex={0}>
+    <div className="sector-card" tabIndex={0} style={flipStyle}>
       <div className="sector-header">
         <div className="sector-header-top">
           <div>

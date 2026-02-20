@@ -24,3 +24,55 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Russell 2000 universe — amber theme ---- */
+
+.universe-russell2000 .sector-card {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.universe-russell2000 .sector-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.universe-russell2000 .sector-card:focus {
+  outline-color: #f59e0b;
+}
+
+.universe-russell2000 .header-card {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+.universe-russell2000 .app-title {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .universe-russell2000 .sector-card {
+    background: #1c1407;
+    border-color: #78350f;
+  }
+
+  .universe-russell2000 .sector-card:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  }
+
+  .universe-russell2000 .header-card {
+    background: #1c1407;
+    border-color: #f59e0b;
+  }
+
+  .universe-russell2000 .app-title {
+    background: linear-gradient(135deg, #fbbf24, #f87171);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}

@@ -2322,13 +2322,41 @@
             },
             "data_integration": {
               "russell_2000_sourcing": {
-                "primary_source": "iShares IWM ETF holdings data",
-                "backup_sources": ["FTSE Russell official data", "Financial data providers"],
-                "update_frequency": "Monthly (Russell reconstitutes quarterly but holdings change)",
+                "primary_source": "SureDividend.com free Excel download with daily updates and financial metrics",
+                "primary_url": "https://forms.suredividend.com/russell-2000",
+                "primary_features": [
+                  "Free Excel download with complete Russell 2000 list",
+                  "Daily updates (very current data)",
+                  "Financial metrics included (P/E ratios, dividend yields, market cap)",
+                  "Ready-to-use format for analysis"
+                ],
+                "backup_sources": [
+                  {
+                    "source": "Barchart.com IWM constituents",
+                    "url": "https://www.barchart.com/etfs-funds/quotes/IWM/constituents",
+                    "features": ["CSV download available", "Real-time data", "Holdings percentages"],
+                    "limitations": ["Requires free account", "1 download/day limit", "5000 records max"]
+                  },
+                  {
+                    "source": "FTSE Russell official spreadsheets",
+                    "url": "https://www.lseg.com/en/ftse-russell/index-resources/constituent-weights",
+                    "features": ["Most authoritative source", "Excel with weights"],
+                    "limitations": ["2-month delay after reviews", "Quarterly updates only"]
+                  },
+                  {
+                    "source": "GitHub community repo",
+                    "url": "https://github.com/ikoniaris/Russell2000/blob/master/russell_2000_components.csv",
+                    "features": ["Direct CSV access", "Simple HTTP download"],
+                    "limitations": ["Uncertain update frequency", "Community-maintained"]
+                  }
+                ],
+                "data_format": "Excel/CSV with Symbol, Company Name, Sector, P/E Ratio, Market Cap, Dividend Yield",
+                "update_strategy": "Monthly download (primary source updates daily)",
                 "data_quality_considerations": [
-                  "IWM may not hold exactly 2000 stocks (varies 1900-2100)",
-                  "Holdings percentages are small (0.01-0.5% typically)",
-                  "Some stocks may not have complete fundamental data"
+                  "Russell 2000 typically has ~2000 stocks (varies 1900-2100)",
+                  "SureDividend includes financial metrics needed for outlier detection",
+                  "Some small-cap stocks may lack P/E ratios (30-40% of constituents)",
+                  "Sector classification may differ slightly between sources"
                 ]
               },
               "database_schema_additions": {
@@ -2401,31 +2429,81 @@
               }
             },
             "data_fetching_implementation": {
-              "iwm_holdings_scraper": {
+              "primary_suredividend_approach": {
                 "rust_implementation": [
-                  "// Fetch IWM holdings from iShares",
-                  "pub async fn fetch_russell_2000() -> Result<Vec<String>, String> {",
+                  "// Fetch Russell 2000 from SureDividend.com Excel download",
+                  "pub async fn fetch_russell_2000() -> Result<Vec<Stock>, String> {",
                   "    let client = reqwest::Client::new();",
                   "    ",
-                  "    // Primary: iShares CSV download",
-                  "    let url = \"https://www.ishares.com/us/products/239710/ishares-russell-2000-etf/1467271812596.ajax?fileType=csv\";",
+                  "    // Primary: SureDividend Excel download",
+                  "    let url = \"https://forms.suredividend.com/russell-2000\";",
                   "    ",
-                  "    match client.get(url).send().await {",
-                  "        Ok(response) => {",
-                  "            let csv_text = response.text().await?;",
-                  "            parse_ishares_csv(csv_text)",
+                  "    match download_excel_file(&client, url).await {",
+                  "        Ok(excel_data) => {",
+                  "            parse_suredividend_excel(excel_data)",
                   "        },",
                   "        Err(_) => {",
-                  "            // Fallback: scrape holdings page", 
-                  "            fetch_russell_fallback().await",
+                  "            // Fallback: Barchart CSV download",
+                  "            fetch_russell_from_barchart().await",
                   "        }",
                   "    }",
+                  "}",
+                  "",
+                  "async fn parse_suredividend_excel(data: Vec<u8>) -> Result<Vec<Stock>, String> {",
+                  "    // Parse Excel file to extract:",
+                  "    // - Symbol, Company Name, Sector",
+                  "    // - P/E Ratio, Market Cap, Dividend Yield",
+                  "    // - Map sectors to internal GICS symbols",
+                  "    Ok(stocks)",
                   "}"
                 ],
-                "error_handling": [
-                  "Graceful fallback if iShares blocks scraping",
-                  "Cache last successful Russell 2000 list",  
-                  "User notification when data is stale"
+                "dependencies": [
+                  "calamine = \"0.26\" # Excel file parsing",
+                  "reqwest = { version = \"0.11\", features = [\"stream\"] }"
+                ]
+              },
+              "fallback_barchart_approach": {
+                "rust_implementation": [
+                  "async fn fetch_russell_from_barchart() -> Result<Vec<Stock>, String> {",
+                  "    let client = reqwest::Client::new();",
+                  "    let url = \"https://www.barchart.com/etfs-funds/quotes/IWM/constituents\";",
+                  "    ",
+                  "    // Option 1: Download CSV if available",
+                  "    if let Ok(csv_url) = extract_csv_download_link(url).await {",
+                  "        return parse_barchart_csv(csv_url).await;",
+                  "    }",
+                  "    ",
+                  "    // Option 2: Scrape HTML table",
+                  "    let html = client.get(url).send().await?.text().await?;",
+                  "    parse_barchart_html_table(html)",
+                  "}",
+                  "",
+                  "fn parse_barchart_html_table(html: String) -> Result<Vec<Stock>, String> {",
+                  "    // Parse HTML table with columns:",
+                  "    // Symbol, Name, % of Fund, Shares Held",
+                  "    // Extract symbols and names, fetch sectors separately",
+                  "    Ok(stocks)",
+                  "}"
+                ]
+              },
+              "error_handling_strategy": [
+                "Graceful cascading fallback: SureDividend → Barchart → FTSE Russell → GitHub repo",
+                "Cache last successful Russell 2000 list for offline usage",
+                "User notification when data is stale (>30 days old)",
+                "Retry mechanism with exponential backoff for network failures",
+                "Validate data completeness (expect ~2000 stocks, reject if <1800)"
+              ],
+              "data_processing": {
+                "sector_mapping": [
+                  "Map various sector naming conventions to internal GICS symbols",
+                  "Handle missing sectors (assign to 'Unclassified' temporarily)",
+                  "Cross-reference with existing S&P 500 stocks to avoid duplicates"
+                ],
+                "data_validation": [
+                  "Ensure stock symbols are valid (2-5 characters, alphanumeric)",
+                  "Validate P/E ratios are reasonable (0.1 - 1000 range)",
+                  "Check for duplicate symbols across sources",
+                  "Flag stocks with missing critical data"
                 ]
               }
             },
@@ -2450,14 +2528,21 @@
               ]
             },
             "validation_steps": [
-              "Successfully fetch ~2000 Russell 2000 constituents from IWM",
-              "Universe toggle works smoothly between S&P 500 and Russell 2000",
-              "Small-cap outlier detection uses appropriate higher thresholds",
-              "Missing P/E ratios handled gracefully (use P/S, P/B alternatives)",
+              "Successfully download Russell 2000 constituents from SureDividend.com (~2000 stocks)",
+              "Excel parsing extracts symbols, names, sectors, and financial metrics correctly",
+              "Fallback to Barchart works when primary source unavailable",
+              "Sector mapping correctly assigns GICS symbols to small-cap stocks",
+              "Universe toggle works smoothly between S&P 500 and Russell 2000 modes",
+              "Small-cap outlier detection uses appropriate higher thresholds (2.0σ vs 1.5σ)",
+              "Missing P/E ratios handled gracefully (30-40% of small-caps lack P/E)",
+              "Alternative metrics (P/S, P/B) work when P/E unavailable",
               "Comparative analysis shows meaningful differences between universes",
-              "Performance remains acceptable with 4x more stocks",
-              "Sector distributions reflect small-cap vs large-cap differences",
-              "UI clearly distinguishes between small-cap and large-cap analysis modes"
+              "Performance remains acceptable with 4x more stocks (~2000 vs ~500)",
+              "Data validation catches invalid symbols and missing critical fields",
+              "Sector distributions reflect small-cap vs large-cap characteristics",
+              "UI clearly distinguishes between small-cap and large-cap analysis modes",
+              "Cache mechanism works for offline usage when data sources unavailable",
+              "Financial metrics from SureDividend integrate properly with outlier detection"
             ]
           }
         }

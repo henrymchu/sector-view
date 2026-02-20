@@ -1556,6 +1556,242 @@
           }
         },
         {
+          "id": "US020",
+          "title": "As a developer, I want comprehensive unit tests for market data API integration",
+          "description": "Ensure Yahoo Finance URL construction and JSON parsing are robust and reliable",
+          "acceptance_criteria": [
+            "URL construction builds correct Yahoo Finance endpoints with proper query parameters",
+            "JSON parsing handles various Yahoo Finance response formats using fixture data",
+            "Error handling works for malformed JSON, missing fields, unexpected data types",
+            "Multiple API endpoints tested (quotes, fundamentals, chart data)",
+            "Edge cases handled (missing P/E ratios, null values, zero prices)",
+            "Performance tests ensure parsing completes within acceptable time limits",
+            "Test coverage > 90% for market_data.rs module"
+          ],
+          "complexity": "Medium",
+          "estimated_hours": 5,
+          "dependencies": ["US007"],
+          "status": "Not Started",
+          "implementation_details": {
+            "testing_framework": {
+              "rust_testing": "Built-in Rust testing with #[cfg(test)] modules in market_data.rs",
+              "additional_crates": [
+                "serde_json = \"1.0\" # JSON parsing and fixture loading",
+                "mockito = \"1.0\" # HTTP mocking for API responses",
+                "url = \"2.5\" # URL construction testing"
+              ],
+              "test_organization": "Tests in src/market_data.rs with #[cfg(test)] mod tests"
+            },
+            "url_construction_testing": {
+              "yahoo_finance_endpoints": {
+                "quote_endpoint": {
+                  "base_url": "https://query1.finance.yahoo.com/v8/finance/chart/",
+                  "test_cases": [
+                    "Single symbol: build_quote_url(\"AAPL\") → \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL\"",
+                    "Multiple symbols: build_quote_url([\"AAPL\", \"MSFT\"]) → proper comma-separated format",
+                    "Special characters: build_quote_url(\"BRK.B\") → properly encoded URL"
+                  ]
+                },
+                "fundamentals_endpoint": {
+                  "base_url": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/",
+                  "test_cases": [
+                    "Standard request: build_fundamentals_url(\"AAPL\") with modules=defaultKeyStatistics,summaryDetail,price",
+                    "Custom modules: build_fundamentals_url(\"MSFT\", [\"earnings\", \"financialData\"])",
+                    "URL encoding: symbols with dots, ampersands handled correctly"
+                  ]
+                }
+              },
+              "query_parameter_testing": {
+                "parameter_encoding": [
+                  "Symbols with dots: \"BRK.B\" → \"BRK.B\" (no encoding needed)",
+                  "Multiple symbols: [\"AAPL\", \"MSFT\", \"GOOGL\"] → \"AAPL,MSFT,GOOGL\"",
+                  "Special characters in parameters handled correctly"
+                ],
+                "implementation_example": [
+                  "#[test]",
+                  "fn test_quote_url_construction() {",
+                  "    let url = build_quote_url(\"AAPL\");",
+                  "    assert_eq!(url, \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL\");",
+                  "    ",
+                  "    let multi_url = build_quote_url(&[\"AAPL\", \"MSFT\"]);",
+                  "    assert!(multi_url.contains(\"AAPL,MSFT\"));",
+                  "}"
+                ]
+              }
+            },
+            "json_parsing_testing": {
+              "fixture_data_strategy": {
+                "fixture_organization": [
+                  "tests/fixtures/yahoo_finance/quote_aapl.json - Single stock quote response",
+                  "tests/fixtures/yahoo_finance/quote_multiple.json - Multiple stocks response",
+                  "tests/fixtures/yahoo_finance/fundamentals_aapl.json - Fundamentals data",
+                  "tests/fixtures/yahoo_finance/malformed_response.json - Invalid/incomplete data"
+                ],
+                "real_response_samples": "Use actual Yahoo Finance responses (anonymized) as test fixtures"
+              },
+              "quote_parsing_tests": {
+                "standard_response": {
+                  "fixture": "quote_aapl.json",
+                  "expected_fields": [
+                    "symbol: \"AAPL\"",
+                    "regularMarketPrice: 150.25",
+                    "regularMarketChangePercent: 2.1",
+                    "regularMarketVolume: 75000000",
+                    "marketCap: 2400000000000"
+                  ],
+                  "test_implementation": [
+                    "#[test]",
+                    "fn test_parse_quote_response() {",
+                    "    let fixture = include_str!(\"../fixtures/yahoo_finance/quote_aapl.json\");",
+                    "    let result = parse_quote_response(fixture).unwrap();",
+                    "    ",
+                    "    assert_eq!(result.symbol, \"AAPL\");",
+                    "    assert!((result.price - 150.25).abs() < 0.01);",
+                    "    assert_eq!(result.volume, Some(75000000));",
+                    "}"
+                  ]
+                }
+              },
+              "fundamentals_parsing_tests": {
+                "complete_data": {
+                  "fixture": "fundamentals_aapl.json",
+                  "expected_fields": [
+                    "trailingPE: 28.5 (P/E ratio)",
+                    "priceToBook: 8.2 (P/B ratio)", 
+                    "beta: 1.21",
+                    "dividendYield: 0.0052 (0.52%)",
+                    "fiftyTwoWeekHigh: 182.94",
+                    "fiftyTwoWeekLow: 124.17"
+                  ]
+                },
+                "missing_fields": {
+                  "fixture": "fundamentals_no_pe.json",
+                  "scenario": "Unprofitable company with no P/E ratio",
+                  "expected_behavior": "trailingPE: None, other fields present"
+                }
+              }
+            },
+            "error_handling_testing": {
+              "malformed_json": {
+                "test_cases": [
+                  "Invalid JSON syntax → return parsing error",
+                  "Valid JSON but wrong structure → return schema error", 
+                  "Missing required fields → return field error",
+                  "Null values in unexpected places → handle gracefully"
+                ],
+                "fixture_examples": [
+                  "malformed_syntax.json - Broken JSON syntax",
+                  "wrong_structure.json - Valid JSON, unexpected schema",
+                  "missing_fields.json - Required fields absent"
+                ]
+              },
+              "api_error_responses": {
+                "yahoo_error_formats": [
+                  "Rate limit exceeded responses",
+                  "Invalid symbol responses", 
+                  "Market closed responses",
+                  "Service unavailable responses"
+                ],
+                "error_parsing": "Extract meaningful error messages from Yahoo Finance error responses"
+              }
+            },
+            "data_validation_testing": {
+              "realistic_ranges": {
+                "price_validation": [
+                  "Prices should be > 0.01 (penny stocks minimum)",
+                  "Prices should be < $10,000 (sanity check)",
+                  "Price changes should be realistic (-50% to +50% daily)"
+                ],
+                "ratio_validation": [
+                  "P/E ratios between 1 and 1000 (extreme but possible)",
+                  "P/B ratios between 0.1 and 50",
+                  "Beta values between -3 and +5"
+                ]
+              },
+              "edge_case_values": [
+                "Zero values in unexpected fields",
+                "Negative values where impossible",
+                "Extremely large numbers (potential overflow)",
+                "NaN or infinity values from calculations"
+              ]
+            },
+            "multiple_symbol_testing": {
+              "batch_processing": {
+                "fixture": "quote_multiple_symbols.json",
+                "scenario": "Response containing AAPL, MSFT, GOOGL data",
+                "expected_behavior": "Parse all symbols correctly, maintain order"
+              },
+              "partial_failures": {
+                "fixture": "quote_mixed_success.json", 
+                "scenario": "Some symbols succeed, others fail (invalid symbols)",
+                "expected_behavior": "Return successful parses, log failures"
+              }
+            },
+            "performance_testing": {
+              "parsing_benchmarks": [
+                "Parse single stock quote < 1ms",
+                "Parse 100 stock quotes < 50ms",
+                "Parse fundamentals data < 5ms",
+                "Memory usage reasonable for large responses"
+              ],
+              "large_response_handling": [
+                "Multi-MB JSON responses (historical data)",
+                "Responses with hundreds of stocks",
+                "Deeply nested JSON structures"
+              ]
+            },
+            "json_fixture_examples": {
+              "quote_aapl.json": {
+                "description": "Real Yahoo Finance quote response structure",
+                "key_sections": [
+                  "chart.result[0].meta - Basic stock info",
+                  "chart.result[0].indicators.quote[0] - Price/volume data",
+                  "chart.result[0].indicators.adjclose[0] - Adjusted prices"
+                ]
+              },
+              "fundamentals_aapl.json": {
+                "description": "Yahoo Finance quoteSummary response",
+                "modules_included": [
+                  "defaultKeyStatistics - P/E, beta, market cap",
+                  "summaryDetail - Price ranges, dividend info",
+                  "price - Current pricing data"
+                ]
+              }
+            },
+            "regression_testing": {
+              "yahoo_format_changes": [
+                "Test against multiple versions of Yahoo Finance responses",
+                "Ensure parsing remains robust to minor format changes",
+                "Document assumptions about Yahoo Finance JSON structure"
+              ],
+              "field_evolution": [
+                "Handle new fields gracefully (ignore unknown fields)",
+                "Maintain backward compatibility with older response formats",
+                "Version fixture data to track format evolution"
+              ]
+            },
+            "integration_testing": {
+              "end_to_end_pipeline": [
+                "URL construction → HTTP request (mocked) → JSON parsing → MarketData struct",
+                "Verify integration with database insertion logic",
+                "Test error propagation through the entire pipeline"
+              ]
+            },
+            "validation_steps": [
+              "URL construction produces correct Yahoo Finance endpoints",
+              "Query parameters are properly formatted and encoded",
+              "JSON parsing handles standard Yahoo Finance response formats",
+              "Fixture data produces expected MarketData structs",
+              "Error handling gracefully manages malformed JSON and API errors",
+              "Multiple symbol responses parsed correctly",
+              "Performance tests complete within acceptable time limits",
+              "Edge cases (missing P/E, zero values) handled appropriately",
+              "Test coverage exceeds 90% for market data module",
+              "Integration tests verify end-to-end API data pipeline"
+            ]
+          }
+        },
+        {
           "id": "US009",
           "title": "As a user, I want to see comprehensive outlier analysis dashboard",
           "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
@@ -2175,7 +2411,7 @@
       "name": "Alpha Release",
       "target_date": "2025-03-01", 
       "description": "Working outlier detection with real data",
-      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US009"],
+      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US020", "US009"],
       "status": "Planned"
     },
     {
@@ -2258,6 +2494,12 @@
       "impact": "Medium",
       "probability": "Medium",
       "mitigation": "Comprehensive parsing tests, mock HTML fixtures, robust error handling, fallback data sources"
+    },
+    {
+      "risk": "Yahoo Finance API Format Changes",
+      "impact": "High",
+      "probability": "Medium",
+      "mitigation": "Comprehensive JSON parsing tests, fixture data versioning, robust error handling, alternative data sources"
     }
   ],
   "notes": {

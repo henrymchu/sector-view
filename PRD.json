@@ -2177,6 +2177,282 @@
           }
         },
         {
+          "id": "US022",
+          "title": "As a user, I want detailed drill-in analysis for individual stocks from the outlier table",
+          "description": "Provide comprehensive individual stock analysis when clicking on any outlier, including fundamentals, charts, sector context, and investment insights",
+          "acceptance_criteria": [
+            "Click any stock in outlier table opens detailed modal/page",
+            "Display comprehensive stock fundamentals (P/E, P/B, market cap, dividend, etc.)",
+            "Show historical price chart with outlier detection overlay",
+            "Present outlier history timeline (how long has it been an outlier?)",
+            "Compare stock metrics vs sector and market averages",
+            "Display similar stocks within the same sector for comparison",
+            "Show investment thesis based on outlier analysis pattern",
+            "Include risk factors and potential catalysts",
+            "Provide actionable insights (why is this stock interesting?)"
+          ],
+          "complexity": "Large",
+          "estimated_hours": 8,
+          "dependencies": ["US009"],
+          "status": "Not Started",
+          "implementation_details": {
+            "user_experience_design": {
+              "trigger_mechanism": [
+                "Click on any stock row in outlier table",
+                "Keyboard shortcut (Enter key) when outlier row is focused",
+                "Right-click context menu with 'View Details' option"
+              ],
+              "presentation_format": [
+                "Full-screen modal overlay (preferred for desktop)",
+                "Side panel slide-out (alternative)",
+                "Dedicated route/page (/stock/AAPL) for deep-linking"
+              ],
+              "navigation_flow": [
+                "User clicks stock in outlier table → Modal opens with loading state",
+                "Fetch detailed data for that specific stock",
+                "Display comprehensive analysis in organized sections",
+                "Allow navigation to other outlier stocks within modal",
+                "Provide 'Close' and 'Back to Outliers' actions"
+              ]
+            },
+            "data_sections": {
+              "stock_overview_header": {
+                "primary_info": [
+                  "Company name and stock symbol (Apple Inc. - AAPL)",
+                  "Current stock price with real-time change",
+                  "Market cap and trading volume",
+                  "Sector classification with sector performance context"
+                ],
+                "outlier_status_badge": [
+                  "Outlier type (Undervalued, Overvalued, Momentum, Value Trap)",
+                  "Composite outlier score (2.8σ with significance indicator)",
+                  "Days as outlier (persistent vs new outlier)",
+                  "Outlier strength trend (strengthening/weakening)"
+                ]
+              },
+              "fundamental_analysis": {
+                "valuation_metrics": [
+                  "P/E Ratio: 28.5 (vs Sector Avg: 32.1, vs S&P 500: 24.8)",
+                  "P/B Ratio: 8.2 (vs Sector Avg: 6.5)",
+                  "PEG Ratio: 1.8 (growth-adjusted valuation)",
+                  "Price-to-Sales: 7.1 (vs Sector Avg: 5.3)",
+                  "Enterprise Value / EBITDA: 22.4"
+                ],
+                "profitability_metrics": [
+                  "Return on Equity (ROE): 147.4%",
+                  "Return on Assets (ROA): 22.1%", 
+                  "Gross Margin: 46.2%",
+                  "Operating Margin: 30.1%",
+                  "Net Margin: 25.3%"
+                ],
+                "financial_health": [
+                  "Debt-to-Equity Ratio: 1.73",
+                  "Current Ratio: 0.94",
+                  "Quick Ratio: 0.83",
+                  "Interest Coverage: 28.9x",
+                  "Free Cash Flow Yield: 3.2%"
+                ],
+                "growth_metrics": [
+                  "Revenue Growth (TTM): 2.1%",
+                  "Earnings Growth (TTM): 11.2%", 
+                  "5-Year Revenue CAGR: 8.9%",
+                  "5-Year EPS CAGR: 15.2%"
+                ]
+              },
+              "outlier_analysis_deep_dive": {
+                "z_score_breakdown": [
+                  "P/E Z-Score: -1.2σ (undervalued vs sector by 1.2 standard deviations)",
+                  "P/B Z-Score: +0.8σ (slightly expensive on book value)",
+                  "Price Performance Z-Score: +2.1σ (strong recent outperformance)",
+                  "Volume Z-Score: +3.5σ (unusual trading activity - institutional interest?)"
+                ],
+                "composite_score_explanation": [
+                  "Overall Composite Score: 2.8σ (Strong Outlier)",
+                  "Calculation: √((1.2² × 0.3) + (0.8² × 0.2) + (2.1² × 0.3) + (3.5² × 0.2))",
+                  "Interpretation: Strong statistical anomaly driven primarily by volume and price momentum",
+                  "Significance: Top 2% of all stocks in this analysis"
+                ],
+                "outlier_classification_logic": [
+                  "Primary Pattern: Momentum Outlier",
+                  "Secondary Pattern: Volume Anomaly", 
+                  "Key Insight: Strong price performance with unusual institutional activity",
+                  "Risk Factor: Valuation still reasonable despite momentum"
+                ]
+              },
+              "historical_context": {
+                "outlier_timeline": [
+                  "First detected as outlier: 12 days ago (2025-01-08)",
+                  "Outlier strength progression: 1.8σ → 2.2σ → 2.8σ (strengthening)",
+                  "Pattern consistency: Momentum outlier for 8 consecutive days",
+                  "Previous outlier periods: Value outlier in Nov 2024 (15 days)"
+                ],
+                "price_performance_chart": [
+                  "90-day price chart with outlier detection overlay",
+                  "Mark periods when stock was an outlier with colored background",
+                  "Show sector and market benchmark performance",
+                  "Highlight key events and earnings releases"
+                ],
+                "volatility_analysis": [
+                  "30-day volatility: 28.5% (vs Sector: 24.1%)",
+                  "90-day volatility: 31.2%",
+                  "Beta vs S&P 500: 1.21 (21% more volatile than market)",
+                  "Volatility trend: Decreasing (good sign for momentum sustainability)"
+                ]
+              },
+              "sector_competitive_context": {
+                "sector_positioning": [
+                  "Rank within Information Technology sector: #3 of 67 stocks by outlier score",
+                  "Sector leaders: NVDA (3.8σ), META (3.1σ), AAPL (2.8σ)",
+                  "Sector performance: Technology +5.2% vs S&P 500 +2.1% (30-day)",
+                  "Stock vs Sector: AAPL +8.1% vs XLK +5.2% (outperforming)"
+                ],
+                "peer_comparison": [
+                  "Similar market cap peers: MSFT, GOOGL, META",
+                  "AAPL P/E: 28.5 vs MSFT: 32.1 vs GOOGL: 24.8 vs META: 23.4",
+                  "AAPL ROE: 147% vs MSFT: 47% vs GOOGL: 28% vs META: 24%",
+                  "Outlier status: Only AAPL and META are current momentum outliers"
+                ],
+                "similar_outlier_stocks": [
+                  "Other momentum outliers in different sectors:",
+                  "Healthcare: UNH (2.4σ momentum outlier)",
+                  "Financials: JPM (2.1σ momentum outlier)",
+                  "Pattern similarity: All showing volume anomalies + price strength"
+                ]
+              },
+              "investment_thesis_analysis": {
+                "bull_case_based_on_outliers": [
+                  "Strong Fundamentals: P/E reasonable despite momentum (not overvalued)",
+                  "Institutional Activity: Volume anomaly suggests smart money accumulation",
+                  "Sector Leadership: Outperforming in strong-performing sector",
+                  "Technical Momentum: Consistent outlier status for 12 days",
+                  "Quality Business: Exceptional ROE and margins vs peers"
+                ],
+                "bear_case_considerations": [
+                  "Momentum Risk: Strong performance may have pulled forward returns",
+                  "Valuation Expansion: P/B ratio above sector average",
+                  "High Expectations: Strong performance creates high bar for next earnings",
+                  "Market Risk: High beta means sensitive to market corrections"
+                ],
+                "key_catalysts_to_watch": [
+                  "Upcoming Earnings: Next report in 3 weeks (potential volatility)",
+                  "Product Launches: New iPhone cycle impact on revenue",
+                  "Sector Rotation: Technology sector momentum sustainability",
+                  "Interest Rates: High-multiple stocks sensitive to rate changes"
+                ]
+              },
+              "actionable_insights": {
+                "investment_decision_framework": [
+                  "For Growth Investors: Strong momentum with reasonable valuation",
+                  "For Value Investors: Not a classic value play, but quality at fair price",
+                  "For Risk-Averse: High volatility and momentum risk to consider",
+                  "For Momentum Traders: Consistent outlier status supports trend continuation"
+                ],
+                "risk_management_considerations": [
+                  "Position Size: Consider volatility in position sizing (beta 1.21)",
+                  "Stop Loss: Technical support levels at $175 and $165",
+                  "Diversification: Don't overweight single momentum outlier", 
+                  "Timeline: Momentum outliers can reverse quickly - have exit plan"
+                ],
+                "further_research_suggestions": [
+                  "Read latest earnings call transcript for management guidance",
+                  "Check institutional ownership changes (13F filings)",
+                  "Monitor sector rotation trends and technology allocations",
+                  "Track key technical levels and volume patterns"
+                ]
+              }
+            },
+            "technical_implementation": {
+              "data_aggregation": {
+                "primary_data_sources": [
+                  "Existing market_data table (current fundamentals)",
+                  "outlier_detections table (historical outlier status)",
+                  "Yahoo Finance API (additional fundamental data)",
+                  "Sector averages from sector_stats_daily table"
+                ],
+                "calculated_metrics": [
+                  "Z-score history over time",
+                  "Outlier persistence calculations",
+                  "Peer comparison rankings",
+                  "Sector positioning analysis"
+                ]
+              },
+              "tauri_commands": [
+                "#[tauri::command]",
+                "pub async fn get_stock_drill_in_data(stock_id: i32) -> Result<StockDrillInData, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn get_stock_outlier_history(stock_id: i32, days: i32) -> Result<Vec<OutlierHistoryPoint>, String>",
+                "",
+                "#[tauri::command]", 
+                "pub async fn get_sector_peer_comparison(stock_id: i32, sector_id: i32) -> Result<PeerComparison, String>",
+                "",
+                "#[tauri::command]",
+                "pub async fn get_similar_outlier_stocks(stock_id: i32, outlier_type: String) -> Result<Vec<SimilarStock>, String>"
+              ],
+              "react_data_structures": [
+                "interface StockDrillInData {",
+                "  stock: Stock;",
+                "  fundamentals: StockFundamentals;",
+                "  outlier_analysis: OutlierAnalysis;",
+                "  historical_context: HistoricalContext;",
+                "  sector_context: SectorContext;",
+                "  investment_thesis: InvestmentThesis;",
+                "}",
+                "",
+                "interface StockFundamentals {",
+                "  valuation: ValuationMetrics;",
+                "  profitability: ProfitabilityMetrics;",
+                "  growth: GrowthMetrics;",
+                "  financial_health: FinancialHealthMetrics;",
+                "}"
+              ],
+              "component_architecture": {
+                "main_component": "src/components/StockDrillIn.tsx",
+                "sub_components": [
+                  "StockOverviewHeader.tsx - Stock info and outlier badge",
+                  "FundamentalAnalysis.tsx - Financial metrics tables",
+                  "OutlierAnalysisChart.tsx - Z-score visualizations", 
+                  "HistoricalChart.tsx - Price chart with outlier overlay",
+                  "SectorComparison.tsx - Peer analysis table",
+                  "InvestmentThesis.tsx - Bull/bear case summary"
+                ],
+                "modal_management": [
+                  "Use React Portal for modal overlay",
+                  "Manage modal state in parent OutlierDashboard",
+                  "Support keyboard navigation (ESC to close, arrow keys for navigation)",
+                  "Handle loading states and error conditions gracefully"
+                ]
+              }
+            },
+            "performance_considerations": {
+              "data_loading_strategy": [
+                "Load basic stock info immediately (from existing outlier data)",
+                "Lazy load detailed fundamentals and historical data",
+                "Cache drill-in data for recently viewed stocks",
+                "Preload data for next/previous outlier stocks in background"
+              ],
+              "ui_responsiveness": [
+                "Modal opens immediately with basic info",
+                "Progressive loading of detailed sections",
+                "Skeleton loaders for data-heavy sections",
+                "Smooth transitions and animations"
+              ]
+            },
+            "validation_steps": [
+              "Click any stock in outlier table opens drill-in modal correctly",
+              "All fundamental metrics display accurately vs manual calculation",
+              "Z-score breakdown matches outlier detection calculations",
+              "Historical outlier timeline shows correct dates and progression",
+              "Sector comparison data is accurate and relevant",
+              "Investment thesis sections provide actionable insights",
+              "Modal handles edge cases (missing data, API failures) gracefully",
+              "Navigation between different outlier stocks works smoothly",
+              "Performance remains acceptable with complex data loading",
+              "Modal is accessible (keyboard navigation, screen readers)"
+            ]
+          }
+        },
+        {
           "id": "US009",
           "title": "As a user, I want to see comprehensive outlier analysis dashboard",
           "description": "Transform outlier detection results into actionable financial intelligence with detailed metrics and trends",
@@ -3124,7 +3400,7 @@
       "name": "Beta Release",
       "target_date": "2025-03-15",
       "description": "Advanced features and polish",
-      "required_stories": ["US010", "US011", "US013", "US014"],
+      "required_stories": ["US010", "US011", "US013", "US014", "US022"],
       "status": "Planned"
     },
     {

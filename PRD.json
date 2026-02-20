@@ -2360,20 +2360,104 @@
                 ]
               },
               "database_schema_additions": {
-                "stock_universe_table": [
+                "migration_file": "src-tauri/migrations/003_russell_2000_universe.sql",
+                "migration_sql": [
+                  "-- Migration: Add Russell 2000 universe support",
                   "CREATE TABLE stock_universe (",
                   "  id INTEGER PRIMARY KEY,",
                   "  stock_id INTEGER NOT NULL REFERENCES stocks(id),", 
-                  "  universe_type TEXT NOT NULL, -- 'sp500', 'russell2000'",
-                  "  date_added DATE NOT NULL,",
+                  "  universe_type TEXT NOT NULL CHECK (universe_type IN ('sp500', 'russell2000')),",
+                  "  date_added DATE NOT NULL DEFAULT CURRENT_DATE,",
                   "  date_removed DATE, -- NULL if still active",
-                  "  INDEX idx_universe_type_active (universe_type, date_removed)",
-                  ");"
-                ],
-                "universe_specific_stats": [
+                  "  UNIQUE(stock_id, universe_type), -- Prevent duplicate assignments",
+                  "  INDEX idx_universe_type_active (universe_type, date_removed),",
+                  "  INDEX idx_stock_universe (stock_id)",
+                  ");",
+                  "",
+                  "-- Add universe tracking to existing tables",
                   "ALTER TABLE sector_stats_daily ADD COLUMN universe_type TEXT NOT NULL DEFAULT 'sp500';",
-                  "ALTER TABLE outlier_detections ADD COLUMN universe_type TEXT NOT NULL DEFAULT 'sp500';"
-                ]
+                  "ALTER TABLE outlier_detections ADD COLUMN universe_type TEXT NOT NULL DEFAULT 'sp500';",
+                  "",
+                  "-- Populate existing S&P 500 stocks into universe table",
+                  "INSERT INTO stock_universe (stock_id, universe_type, date_added)",
+                  "SELECT id, 'sp500', '2025-01-01' FROM stocks;",
+                  "",
+                  "-- Create universe-specific indexes for performance",
+                  "CREATE INDEX idx_sector_stats_universe ON sector_stats_daily(universe_type, sector_id, stats_date);",
+                  "CREATE INDEX idx_outlier_detections_universe ON outlier_detections(universe_type, sector_id, detection_date);"
+                ],
+                "data_population_strategy": {
+                  "overlap_handling": {
+                    "description": "Some stocks appear in both S&P 500 and Russell 2000 (large-caps can be in Russell 1000 + Russell 2000)",
+                    "approach": "Allow stocks in multiple universes via stock_universe table",
+                    "implementation": [
+                      "1. Keep existing stocks table as master stock registry",
+                      "2. stock_universe table maps stocks to universes (many-to-many)",
+                      "3. Stocks can have multiple universe_type entries",
+                      "4. UI filters by universe via JOIN on stock_universe"
+                    ]
+                  },
+                  "russell_2000_population": {
+                    "process": [
+                      "1. Fetch Russell 2000 list from SureDividend.com",
+                      "2. For each Russell 2000 stock:",
+                      "   - Check if stock exists in stocks table",
+                      "   - If exists: INSERT INTO stock_universe (stock_id, 'russell2000')", 
+                      "   - If not exists: INSERT INTO stocks, then INSERT INTO stock_universe",
+                      "3. Map sectors using same logic as S&P 500 sector mapping",
+                      "4. Handle missing sectors by assigning sector_id = NULL initially"
+                    ],
+                    "sql_example": [
+                      "-- Add new Russell 2000 stock",
+                      "INSERT OR IGNORE INTO stocks (symbol, name, sector_id) VALUES (?, ?, ?);",
+                      "INSERT INTO stock_universe (stock_id, universe_type)",
+                      "SELECT id, 'russell2000' FROM stocks WHERE symbol = ?;"
+                    ]
+                  }
+                },
+                "query_integration": {
+                  "universe_filtering": {
+                    "get_stocks_by_universe": [
+                      "-- Get stocks for specific universe",
+                      "SELECT s.*, su.universe_type, se.name as sector_name",
+                      "FROM stocks s",
+                      "JOIN stock_universe su ON s.id = su.stock_id",
+                      "LEFT JOIN sectors se ON s.sector_id = se.id", 
+                      "WHERE su.universe_type = ? AND su.date_removed IS NULL;"
+                    ],
+                    "outlier_detection_filtering": [
+                      "-- Get outliers for specific universe",
+                      "SELECT od.*, s.symbol, s.name",
+                      "FROM outlier_detections od",
+                      "JOIN stocks s ON od.stock_id = s.id",
+                      "WHERE od.universe_type = ? AND od.detection_date = CURRENT_DATE;"
+                    ]
+                  },
+                  "sector_stats_by_universe": [
+                    "-- Calculate sector averages per universe",
+                    "SELECT ssd.sector_id, ssd.universe_type,",
+                    "       ssd.pe_mean, ssd.pb_mean, ssd.price_change_mean",
+                    "FROM sector_stats_daily ssd",
+                    "WHERE ssd.universe_type = ? AND ssd.stats_date = CURRENT_DATE;"
+                  ]
+                },
+                "tauri_command_updates": {
+                  "new_commands": [
+                    "#[tauri::command]",
+                    "pub async fn get_stocks_by_universe(universe: String) -> Result<Vec<Stock>, String>",
+                    "",
+                    "#[tauri::command]", 
+                    "pub async fn get_outliers_by_universe(universe: String) -> Result<Vec<OutlierStock>, String>",
+                    "",
+                    "#[tauri::command]",
+                    "pub async fn refresh_russell_2000_data() -> Result<String, String>"
+                  ],
+                  "modified_commands": [
+                    "get_sectors() -> add universe parameter",
+                    "detect_outliers() -> add universe parameter",
+                    "get_sector_performance() -> filter by universe"
+                  ]
+                }
               }
             },
             "tailored_outlier_detection": {

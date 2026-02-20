@@ -2705,7 +2705,125 @@
               "data_volume": "Russell 2000 = 2000 stocks vs S&P 500 = 500 stocks (4x data)",
               "api_rate_limits": "Stagger API calls to avoid overwhelming Yahoo Finance",
               "database_indexing": "Ensure universe_type is indexed for fast filtering",
-              "ui_responsiveness": "Use pagination/virtualization for large outlier lists"
+              "ui_responsiveness": "Use pagination/virtualization for large outlier lists",
+              "performance_benchmarks": {
+                "database_query_targets": [
+                  "get_sectors_by_universe('sp500') < 50ms (baseline)",
+                  "get_sectors_by_universe('russell2000') < 200ms (4x data)",
+                  "detect_outliers_by_universe('russell2000') < 500ms",
+                  "Universe toggle (full data refresh) < 1 second"
+                ],
+                "memory_usage_targets": [
+                  "S&P 500 mode: < 50MB memory usage",
+                  "Russell 2000 mode: < 150MB memory usage", 
+                  "Universe switching: < 20MB additional overhead",
+                  "No memory leaks during repeated universe switches"
+                ],
+                "ui_responsiveness_targets": [
+                  "Universe toggle button response < 100ms",
+                  "SectorGrid re-render with 2000 stocks < 300ms",
+                  "Outlier list rendering (100+ items) < 200ms",
+                  "Smooth scrolling maintained with large datasets"
+                ]
+              }
+            },
+            "russell_2000_testing_strategy": {
+              "mock_dataset_approach": {
+                "development_dataset": {
+                  "size": "50 representative Russell 2000 stocks for fast testing",
+                  "composition": [
+                    "10 Technology stocks (high P/E, growth-oriented)",
+                    "8 Healthcare stocks (mix of profitable and unprofitable biotech)", 
+                    "8 Financial stocks (regional banks, lower volatility)",
+                    "6 Industrial stocks (manufacturing, moderate P/E)",
+                    "5 Consumer Discretionary stocks (retail, cyclical)",
+                    "4 Energy stocks (exploration, high volatility)",
+                    "3 Materials stocks (commodity-dependent)",
+                    "3 Real Estate stocks (REITs)",
+                    "2 Utilities stocks (stable, low growth)",
+                    "1 Communication Services stock"
+                  ],
+                  "characteristics_simulation": [
+                    "30% have missing P/E ratios (represent unprofitable small-caps)",
+                    "Average market cap: $1-5 billion (true small-cap range)", 
+                    "Higher volatility: 2-3x price swings vs large-caps",
+                    "Include penny stocks ($1-10 range) and micro-caps",
+                    "Mix of dividend-paying and growth-focused stocks"
+                  ]
+                },
+                "fixture_file_location": "src-tauri/src/test_data/mock_russell_2000.json",
+                "fixture_structure": [
+                  "{",
+                  "  \"stocks\": [",
+                  "    {",
+                  "      \"symbol\": \"SMCI\",",
+                  "      \"name\": \"Super Micro Computer Inc\",",
+                  "      \"sector\": \"Information Technology\",",
+                  "      \"market_cap\": 2500000000,",
+                  "      \"pe_ratio\": null,",
+                  "      \"pb_ratio\": 3.2,",
+                  "      \"price\": 45.67,",
+                  "      \"price_change_percent\": -2.1,",
+                  "      \"volume\": 850000,",
+                  "      \"avg_volume\": 650000",
+                  "    }",
+                  "  ]",
+                  "}"
+                ],
+                "testing_scenarios": [
+                  "Full Russell 2000 outlier detection with 50-stock subset",
+                  "Performance comparison: 50 stocks vs 500 stocks vs 2000 stocks", 
+                  "Missing data handling: 30% missing P/E ratios",
+                  "Small-cap volatility: Higher Z-score thresholds (2.0σ vs 1.5σ)",
+                  "Sector distribution: Verify small-cap vs large-cap differences"
+                ]
+              },
+              "performance_benchmarking": {
+                "test_datasets": [
+                  "mock_sp500_subset.json (50 stocks) - baseline performance",
+                  "mock_russell_2000_subset.json (50 stocks) - feature testing",
+                  "mock_russell_2000_stress.json (500 stocks) - stress testing",
+                  "mock_russell_2000_max.json (2000 stocks) - production load"
+                ],
+                "rust_benchmark_tests": [
+                  "#[bench]",
+                  "fn bench_outlier_detection_sp500_baseline() {",
+                  "    let stocks = load_mock_sp500_subset();", 
+                  "    bench_iter(|| detect_outliers_by_universe(&stocks, \"sp500\"));",
+                  "}",
+                  "",
+                  "#[bench]", 
+                  "fn bench_outlier_detection_russell2000_full() {",
+                  "    let stocks = load_mock_russell_2000_full();",
+                  "    bench_iter(|| detect_outliers_by_universe(&stocks, \"russell2000\"));",
+                  "}"
+                ]
+              },
+              "ui_testing_framework": {
+                "universe_toggle_tests": [
+                  "test('renders both S&P 500 and Russell 2000 options')",
+                  "test('shows active state for current universe')",
+                  "test('calls onUniverseChange when toggled')",
+                  "test('persists universe selection between sessions')"
+                ],
+                "sectorgrid_integration_tests": [
+                  "test('loads S&P 500 sectors by default')",
+                  "test('switches to Russell 2000 when universe changes')",
+                  "test('shows loading state during universe switch')",
+                  "test('handles universe switch errors gracefully')"
+                ],
+                "mock_tauri_commands": [
+                  "Mock get_sectors_by_universe with different datasets",
+                  "Mock detect_outliers_by_universe with universe-specific results", 
+                  "Mock refresh_universe_data with appropriate delays",
+                  "Simulate network errors and data loading failures"
+                ],
+                "test_file_locations": [
+                  "src/components/__tests__/UniverseToggle.test.tsx",
+                  "src/components/__tests__/SectorGrid.universe.test.tsx",
+                  "src/test/fixtures/mock_russell_2000.ts"
+                ]
+              }
             },
             "analytical_insights": {
               "cross_universe_comparisons": [

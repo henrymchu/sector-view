@@ -4,23 +4,42 @@
     "version": "1.0.0",
     "description": "Desktop application for S&P 500 sector analysis and outlier detection",
     "target_platform": "macOS",
-    "tech_stack": ["Tauri", "Rust", "React", "TypeScript", "SQLite", "Python"]
+    "tech_stack": [
+      "Tauri",
+      "Rust",
+      "React",
+      "TypeScript",
+      "SQLite",
+      "Python"
+    ]
   },
   "user_personas": [
     {
       "name": "Day Trader",
       "description": "Active trader looking for quick sector outlier opportunities",
-      "goals": ["Find undervalued stocks", "Identify momentum plays", "React to market changes quickly"]
+      "goals": [
+        "Find undervalued stocks",
+        "Identify momentum plays",
+        "React to market changes quickly"
+      ]
     },
     {
-      "name": "Portfolio Manager", 
+      "name": "Portfolio Manager",
       "description": "Professional managing diversified portfolios",
-      "goals": ["Sector rotation strategies", "Risk management", "Performance attribution"]
+      "goals": [
+        "Sector rotation strategies",
+        "Risk management",
+        "Performance attribution"
+      ]
     },
     {
       "name": "Job Seeker",
       "description": "Developer showcasing technical skills",
-      "goals": ["Demonstrate full-stack abilities", "Show financial domain knowledge", "Create impressive portfolio piece"]
+      "goals": [
+        "Demonstrate full-stack abilities",
+        "Show financial domain knowledge",
+        "Create impressive portfolio piece"
+      ]
     }
   ],
   "user_stories": {
@@ -41,7 +60,7 @@
           "complexity": "Small",
           "estimated_hours": 2,
           "dependencies": [],
-          "status": "Not Started",
+          "status": "Completed",
           "implementation_details": {
             "setup_commands": [
               "cd /Users/collettemilton/code/sector-view",
@@ -54,7 +73,7 @@
                 "description": "Configure window settings and app metadata",
                 "key_changes": [
                   "Set productName to 'Sector View'",
-                  "Set window title to 'Sector View'", 
+                  "Set window title to 'Sector View'",
                   "Set window dimensions: 1200x800",
                   "Set minWidth: 800, minHeight: 600"
                 ]
@@ -83,7 +102,7 @@
           }
         },
         {
-          "id": "US002", 
+          "id": "US002",
           "title": "As a user, I want to see a basic sector grid layout",
           "description": "Create React components for displaying 11 GICS sectors in a grid",
           "acceptance_criteria": [
@@ -95,8 +114,10 @@
           ],
           "complexity": "Small",
           "estimated_hours": 3,
-          "dependencies": ["US001"],
-          "status": "Not Started",
+          "dependencies": [
+            "US001"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "ui_design": {
               "layout": "CSS Grid with 4 columns, auto rows",
@@ -104,7 +125,7 @@
               "spacing": "16px gaps between cards",
               "responsive_breakpoints": [
                 "< 1000px: 3 columns",
-                "< 800px: 2 columns", 
+                "< 800px: 2 columns",
                 "< 500px: 1 column"
               ]
             },
@@ -323,10 +344,12 @@
             "Success/error feedback shows what was updated with appropriate scope",
             "Prevents multiple simultaneous refreshes (disable all refresh buttons during any refresh)"
           ],
-          "complexity": "Small", 
+          "complexity": "Small",
           "estimated_hours": 2,
-          "dependencies": ["US002"],
-          "status": "Not Started",
+          "dependencies": [
+            "US002"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "ui_design": {
               "global_refresh_button": {
@@ -347,7 +370,7 @@
             "triple_refresh_strategy": {
               "global_refresh": {
                 "trigger": "Main refresh button in header",
-                "purpose": "Update all stocks + discover new ones", 
+                "purpose": "Update all stocks + discover new ones",
                 "scope": "All stocks across all sectors",
                 "user_feedback": "Updated 55 stocks, found 2 new stocks",
                 "use_case": "Full data refresh, daily/weekly maintenance"
@@ -403,7 +426,7 @@
               "manual_over_automatic": "User decides when to refresh rather than automatic intervals",
               "benefits": [
                 "Respects API rate limits (user won't spam refresh)",
-                "Saves battery/resources", 
+                "Saves battery/resources",
                 "User controls when they see new data",
                 "No surprise data changes during analysis"
               ],
@@ -483,7 +506,7 @@
                   "  setSectorRefreshing(true);",
                   "  try {",
                   "    // Call API to refresh only this sector's stocks",
-                  "    await refreshSectorStocks(sector.id);", 
+                  "    await refreshSectorStocks(sector.id);",
                   "    showToast(`Updated ${stockCount} ${sector.name} stocks`, 'success');",
                   "  } catch (error) {",
                   "    showToast(`Failed to refresh ${sector.name}`, 'error');",
@@ -593,7 +616,7 @@
             },
             "accessibility": [
               "Button has proper ARIA labels",
-              "Loading state announced to screen readers", 
+              "Loading state announced to screen readers",
               "Keyboard navigation support",
               "High contrast button colors"
             ],
@@ -634,7 +657,7 @@
           "complexity": "Medium",
           "estimated_hours": 4,
           "dependencies": [],
-          "status": "Not Started",
+          "status": "Completed",
           "implementation_details": {
             "minimal_schema": {
               "philosophy": "Start with just sectors and stocks tables. Add market data tables later when we implement US007 (market data integration).",
@@ -645,7 +668,7 @@
                   "symbol TEXT NOT NULL (e.g., 'XLK' - sector ETF symbol)"
                 ],
                 "stocks": [
-                  "id INTEGER PRIMARY KEY", 
+                  "id INTEGER PRIMARY KEY",
                   "symbol TEXT NOT NULL (e.g., 'AAPL')",
                   "name TEXT NOT NULL (e.g., 'Apple Inc.')",
                   "sector_id INTEGER NULL REFERENCES sectors(id) -- Nullable for unclassified stocks"
@@ -661,7 +684,7 @@
                 "description": "Database connection and basic operations",
                 "functions": [
                   "init_database() -> Result<SqlitePool>",
-                  "create_tables() -> Result<()>", 
+                  "create_tables() -> Result<()>",
                   "get_connection() -> &SqlitePool"
                 ]
               },
@@ -685,7 +708,7 @@
             },
             "future_evolution": [
               "US007: Add market_data table for prices/volume",
-              "US008: Add outlier_alerts table for detection results", 
+              "US008: Add outlier_alerts table for detection results",
               "US012: Add historical_data table for time series"
             ]
           }
@@ -702,34 +725,135 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 3,
-          "dependencies": ["US004"],
-          "status": "Not Started",
+          "dependencies": [
+            "US004"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "sector_seed_data": [
-              { "symbol": "XLK", "name": "Information Technology" },
-              { "symbol": "XLV", "name": "Health Care" },
-              { "symbol": "XLF", "name": "Financials" },
-              { "symbol": "XLY", "name": "Consumer Discretionary" },
-              { "symbol": "XLC", "name": "Communication Services" },
-              { "symbol": "XLI", "name": "Industrials" },
-              { "symbol": "XLP", "name": "Consumer Staples" },
-              { "symbol": "XLE", "name": "Energy" },
-              { "symbol": "XLU", "name": "Utilities" },
-              { "symbol": "XLRE", "name": "Real Estate" },
-              { "symbol": "XLB", "name": "Materials" }
+              {
+                "symbol": "XLK",
+                "name": "Information Technology"
+              },
+              {
+                "symbol": "XLV",
+                "name": "Health Care"
+              },
+              {
+                "symbol": "XLF",
+                "name": "Financials"
+              },
+              {
+                "symbol": "XLY",
+                "name": "Consumer Discretionary"
+              },
+              {
+                "symbol": "XLC",
+                "name": "Communication Services"
+              },
+              {
+                "symbol": "XLI",
+                "name": "Industrials"
+              },
+              {
+                "symbol": "XLP",
+                "name": "Consumer Staples"
+              },
+              {
+                "symbol": "XLE",
+                "name": "Energy"
+              },
+              {
+                "symbol": "XLU",
+                "name": "Utilities"
+              },
+              {
+                "symbol": "XLRE",
+                "name": "Real Estate"
+              },
+              {
+                "symbol": "XLB",
+                "name": "Materials"
+              }
             ],
             "sample_stocks_per_sector": {
-              "XLK": ["AAPL", "MSFT", "GOOGL", "NVDA", "META"],
-              "XLV": ["JNJ", "PFE", "UNH", "ABBV", "TMO"],
-              "XLF": ["JPM", "BAC", "WFC", "GS", "MS"],
-              "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE"],
-              "XLC": ["GOOGL", "META", "VZ", "T", "DIS"],
-              "XLI": ["BA", "CAT", "UPS", "GE", "RTX"],
-              "XLP": ["PG", "KO", "PEP", "WMT", "COST"],
-              "XLE": ["XOM", "CVX", "COP", "EOG", "SLB"],
-              "XLU": ["NEE", "SO", "DUK", "AEP", "EXC"],
-              "XLRE": ["AMT", "PLD", "CCI", "EQIX", "SPG"],
-              "XLB": ["LIN", "APD", "SHW", "FCX", "DOW"]
+              "XLK": [
+                "AAPL",
+                "MSFT",
+                "GOOGL",
+                "NVDA",
+                "META"
+              ],
+              "XLV": [
+                "JNJ",
+                "PFE",
+                "UNH",
+                "ABBV",
+                "TMO"
+              ],
+              "XLF": [
+                "JPM",
+                "BAC",
+                "WFC",
+                "GS",
+                "MS"
+              ],
+              "XLY": [
+                "AMZN",
+                "TSLA",
+                "HD",
+                "MCD",
+                "NKE"
+              ],
+              "XLC": [
+                "GOOGL",
+                "META",
+                "VZ",
+                "T",
+                "DIS"
+              ],
+              "XLI": [
+                "BA",
+                "CAT",
+                "UPS",
+                "GE",
+                "RTX"
+              ],
+              "XLP": [
+                "PG",
+                "KO",
+                "PEP",
+                "WMT",
+                "COST"
+              ],
+              "XLE": [
+                "XOM",
+                "CVX",
+                "COP",
+                "EOG",
+                "SLB"
+              ],
+              "XLU": [
+                "NEE",
+                "SO",
+                "DUK",
+                "AEP",
+                "EXC"
+              ],
+              "XLRE": [
+                "AMT",
+                "PLD",
+                "CCI",
+                "EQIX",
+                "SPG"
+              ],
+              "XLB": [
+                "LIN",
+                "APD",
+                "SHW",
+                "FCX",
+                "DOW"
+              ]
             },
             "seed_approach": "Start with ~5 major stocks per sector for MVP. Can expand to full S&P 500 later.",
             "key_files": {
@@ -757,15 +881,17 @@
           "description": "Create Rust commands that React can call for database operations",
           "acceptance_criteria": [
             "get_sectors() command returns all sectors",
-            "get_stocks_by_sector(id) returns stocks for a sector", 
+            "get_stocks_by_sector(id) returns stocks for a sector",
             "Commands handle errors gracefully",
             "TypeScript interfaces defined for return types",
             "React components can successfully call Rust functions"
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
-          "dependencies": ["US005"],
-          "status": "Not Started",
+          "dependencies": [
+            "US005"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "tauri_concepts": {
               "what_are_commands": "Tauri commands are Rust functions that React can call like API endpoints. They're the bridge between your frontend and backend.",
@@ -784,7 +910,7 @@
                 "code": "use serde::{Deserialize, Serialize};\n\n#[derive(Debug, Serialize, Deserialize)]\npub struct Sector {\n    pub id: i32,\n    pub name: String,\n    pub symbol: String,\n}\n\n#[derive(Debug, Serialize, Deserialize)]\npub struct Stock {\n    pub id: i32,\n    pub symbol: String,\n    pub name: String,\n    pub sector_id: Option<i32>,\n}"
               },
               "2_create_commands": {
-                "file": "src-tauri/src/commands.rs", 
+                "file": "src-tauri/src/commands.rs",
                 "purpose": "Write the actual functions React can call",
                 "code": "use crate::{database::get_connection, types::{Sector, Stock}};\n\n#[tauri::command]\npub async fn get_sectors() -> Result<Vec<Sector>, String> {\n    let pool = get_connection().map_err(|e| e.to_string())?;\n    \n    let rows = sqlx::query!(\"SELECT id, name, symbol FROM sectors\")\n        .fetch_all(&pool)\n        .await\n        .map_err(|e| format!(\"Database error: {}\", e))?;\n    \n    let sectors = rows.into_iter().map(|row| Sector {\n        id: row.id,\n        name: row.name,\n        symbol: row.symbol,\n    }).collect();\n    \n    Ok(sectors)\n}\n\n#[tauri::command]\npub async fn get_stocks_by_sector(sector_id: i32) -> Result<Vec<Stock>, String> {\n    let pool = get_connection().map_err(|e| e.to_string())?;\n    \n    let rows = sqlx::query!(\"SELECT id, symbol, name, sector_id FROM stocks WHERE sector_id = ?\", sector_id)\n        .fetch_all(&pool)\n        .await\n        .map_err(|e| format!(\"Database error: {}\", e))?;\n    \n    let stocks = rows.into_iter().map(|row| Stock {\n        id: row.id,\n        symbol: row.symbol,\n        name: row.name,\n        sector_id: row.sector_id,\n    }).collect();\n    \n    Ok(stocks)\n}"
               },
@@ -799,7 +925,7 @@
                 "code": "export interface Sector {\n  id: number;\n  name: string;\n  symbol: string;\n}\n\nexport interface Stock {\n  id: number;\n  symbol: string;\n  name: string;\n  sector_id: number | null;\n}"
               },
               "5_react_hook": {
-                "file": "src/hooks/useDatabase.ts", 
+                "file": "src/hooks/useDatabase.ts",
                 "purpose": "Easy way to call Rust from React components",
                 "code": "import { invoke } from '@tauri-apps/api/tauri';\nimport { Sector, Stock } from '../types/database';\n\nexport const useDatabase = () => {\n  const getSectors = async (): Promise<Sector[]> => {\n    try {\n      return await invoke<Sector[]>('get_sectors');\n    } catch (error) {\n      console.error('Failed to get sectors:', error);\n      throw error;\n    }\n  };\n\n  const getStocksBySector = async (sectorId: number): Promise<Stock[]> => {\n    try {\n      return await invoke<Stock[]>('get_stocks_by_sector', { sectorId });\n    } catch (error) {\n      console.error('Failed to get stocks:', error);\n      throw error;\n    }\n  };\n\n  return { getSectors, getStocksBySector };\n};"
               }
@@ -817,7 +943,7 @@
             "testing_strategy": [
               "1. Start with get_sectors() - no parameters, easier to test",
               "2. Test in browser console: await window.__TAURI__.invoke('get_sectors')",
-              "3. Add get_stocks_by_sector() once first command works", 
+              "3. Add get_stocks_by_sector() once first command works",
               "4. Create React components that use the hooks",
               "5. Add error handling and loading states"
             ],
@@ -825,7 +951,7 @@
               "Can call get_sectors() from React browser console",
               "Returns array of 11 sectors with correct structure",
               "Can call get_stocks_by_sector(1) and get stocks for sector 1",
-              "TypeScript types prevent errors (no red squiggles)", 
+              "TypeScript types prevent errors (no red squiggles)",
               "Error handling works (try invalid sector ID)",
               "React components can use the database hooks successfully"
             ]
@@ -834,7 +960,7 @@
       ]
     },
     "epic_3_market_data": {
-      "title": "Real Market Data Integration", 
+      "title": "Real Market Data Integration",
       "priority": "P1",
       "stories": [
         {
@@ -845,15 +971,17 @@
             "Yahoo Finance API integration working for both price and fundamental data",
             "Sector cards show multiple metrics (price change %, avg P/E, market cap)",
             "Market data table captures comprehensive financial metrics",
-            "Data updates when refresh is pressed", 
+            "Data updates when refresh is pressed",
             "Handles API errors gracefully (shows cached data)",
             "Respects API rate limits (no more than 2000 requests/hour)",
             "Missing fundamental data handled without crashes"
           ],
           "complexity": "Large",
           "estimated_hours": 8,
-          "dependencies": ["US006"],
-          "status": "Not Started",
+          "dependencies": [
+            "US006"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "api_strategy": {
               "primary": "Yahoo Finance via Rust reqwest HTTP client",
@@ -875,7 +1003,7 @@
                 "price REAL NOT NULL",
                 "price_change REAL NOT NULL -- Dollar change from previous close",
                 "price_change_percent REAL NOT NULL -- Percentage change",
-                "-- Volume & Liquidity --", 
+                "-- Volume & Liquidity --",
                 "volume INTEGER",
                 "avg_volume_10d INTEGER -- 10-day average volume",
                 "-- Market & Valuation --",
@@ -902,7 +1030,7 @@
               "3. Insert/update market_data table with rich financial metrics",
               "4. Calculate sector averages across multiple dimensions:",
               "   - Price performance (%, volume-weighted)",
-              "   - Valuation metrics (avg P/E, P/B ratios per sector)", 
+              "   - Valuation metrics (avg P/E, P/B ratios per sector)",
               "   - Volatility (avg beta, price volatility)",
               "   - Market cap distribution",
               "5. Cache multi-dimensional sector data for UI and outlier detection",
@@ -970,7 +1098,7 @@
           "description": "Implement sophisticated outlier detection across multiple financial metrics with composite scoring",
           "acceptance_criteria": [
             "Calculate sector standard deviations for P/E ratios, P/B ratios, and price changes",
-            "Identify stocks >1.5σ from sector average on any metric", 
+            "Identify stocks >1.5\u03c3 from sector average on any metric",
             "Generate composite outlier score combining multiple metrics",
             "Display outlier count and severity on sector cards",
             "Color code: green for undervalued outliers, red for overvalued outliers",
@@ -978,18 +1106,20 @@
           ],
           "complexity": "Large",
           "estimated_hours": 8,
-          "dependencies": ["US007"],
-          "status": "Not Started",
+          "dependencies": [
+            "US007"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "statistical_methodology": {
               "z_score_calculation": {
                 "formula": "z = (value - mean) / standard_deviation",
                 "interpretation": [
                   "z > +1.5: Stock significantly above sector average",
-                  "z < -1.5: Stock significantly below sector average", 
+                  "z < -1.5: Stock significantly below sector average",
                   "z between -1.5 and +1.5: Within normal range"
                 ],
-                "threshold_configurable": "Default 1.5σ, but user can adjust in settings"
+                "threshold_configurable": "Default 1.5\u03c3, but user can adjust in settings"
               },
               "metrics_analyzed": {
                 "price_performance": {
@@ -997,7 +1127,7 @@
                   "interpretation": "High +z = outperforming sector, Low -z = underperforming sector"
                 },
                 "valuation_pe": {
-                  "metric": "pe_ratio", 
+                  "metric": "pe_ratio",
                   "interpretation": "High +z = expensive vs sector, Low -z = cheap vs sector",
                   "null_handling": "Skip stocks with NULL P/E (unprofitable companies)"
                 },
@@ -1018,17 +1148,17 @@
             "composite_scoring": {
               "weighted_approach": {
                 "description": "Combine multiple Z-scores into single outlier strength score",
-                "formula": "composite_score = sqrt(z_pe² + z_pb² + z_price² + z_volume²) / num_valid_metrics",
+                "formula": "composite_score = sqrt(z_pe\u00b2 + z_pb\u00b2 + z_price\u00b2 + z_volume\u00b2) / num_valid_metrics",
                 "weights": {
                   "pe_ratio": 0.3,
-                  "pb_ratio": 0.2, 
+                  "pb_ratio": 0.2,
                   "price_change": 0.3,
                   "volume_ratio": 0.2
                 },
                 "interpretation": [
                   "Score 0-1: Normal stock, within sector norms",
                   "Score 1-2: Moderate outlier, worth noting",
-                  "Score 2-3: Strong outlier, significant deviation", 
+                  "Score 2-3: Strong outlier, significant deviation",
                   "Score 3+: Extreme outlier, investigate immediately"
                 ]
               },
@@ -1045,7 +1175,7 @@
                 "description": "Statistical analysis engine in Rust for performance",
                 "key_functions": [
                   "calculate_sector_statistics(sector_id: i32) -> SectorStats",
-                  "calculate_z_scores(stock: &Stock, sector_stats: &SectorStats) -> ZScores", 
+                  "calculate_z_scores(stock: &Stock, sector_stats: &SectorStats) -> ZScores",
                   "calculate_composite_score(z_scores: &ZScores) -> f64",
                   "classify_outlier_type(z_scores: &ZScores) -> OutlierType",
                   "find_sector_outliers(sector_id: i32, threshold: f64) -> Vec<OutlierStock>"
@@ -1068,7 +1198,7 @@
                   "#[derive(Debug, Serialize, Deserialize)]",
                   "pub struct ZScores {",
                   "    pub pe_z: Option<f64>,",
-                  "    pub pb_z: Option<f64>,", 
+                  "    pub pb_z: Option<f64>,",
                   "    pub price_z: f64,",
                   "    pub volume_z: f64,",
                   "}",
@@ -1090,10 +1220,10 @@
               "step_by_step_process": [
                 "1. For each sector, gather all stocks with valid market data",
                 "2. Calculate sector averages and standard deviations for each metric",
-                "3. For each stock, calculate Z-scores vs its sector", 
+                "3. For each stock, calculate Z-scores vs its sector",
                 "4. Compute composite outlier score from individual Z-scores",
                 "5. Classify outlier type (undervalued, overvalued, momentum, etc.)",
-                "6. Filter stocks above threshold (default 1.5σ composite score)",
+                "6. Filter stocks above threshold (default 1.5\u03c3 composite score)",
                 "7. Sort by composite score (strongest outliers first)",
                 "8. Return ranked list of outlier stocks per sector"
               ],
@@ -1151,7 +1281,7 @@
                   "  stats_date DATE NOT NULL,",
                   "  stock_count INTEGER NOT NULL,",
                   "  pe_mean REAL,",
-                  "  pe_std_dev REAL,", 
+                  "  pe_std_dev REAL,",
                   "  pb_mean REAL,",
                   "  pb_std_dev REAL,",
                   "  price_change_mean REAL NOT NULL,",
@@ -1177,7 +1307,7 @@
                   "",
                   "// After: Get stocks for sector + universe",
                   "SELECT s.* FROM stocks s",
-                  "JOIN stock_universe su ON s.id = su.stock_id", 
+                  "JOIN stock_universe su ON s.id = su.stock_id",
                   "WHERE s.sector_id = ? AND su.universe_type = ? AND su.date_removed IS NULL"
                 ],
                 "struct_modifications": [
@@ -1231,7 +1361,7 @@
                   "      >",
                   "        S&P 500 ({sectors.length})",
                   "      </button>",
-                  "      <button", 
+                  "      <button",
                   "        className={currentUniverse === 'russell2000' ? 'active' : ''}",
                   "        onClick={() => onUniverseChange('russell2000')}",
                   "      >",
@@ -1242,10 +1372,10 @@
                   "};"
                 ],
                 "data_flow_changes": [
-                  "1. User clicks universe toggle (S&P 500 ↔ Russell 2000)",
+                  "1. User clicks universe toggle (S&P 500 \u2194 Russell 2000)",
                   "2. setCurrentUniverse() triggers useEffect in SectorGrid",
                   "3. getSectorsByUniverse(universe) calls Tauri command",
-                  "4. Rust fetches universe-specific sector data", 
+                  "4. Rust fetches universe-specific sector data",
                   "5. SectorGrid re-renders with new universe data",
                   "6. Outlier counts update per universe automatically"
                 ]
@@ -1258,7 +1388,7 @@
                 "#[tauri::command]",
                 "pub async fn detect_outliers_by_universe(threshold: f64, universe: String) -> Result<Vec<SectorOutliers>, String>",
                 "",
-                "#[tauri::command]", 
+                "#[tauri::command]",
                 "pub async fn get_sector_outliers_by_universe(sector_id: i32, universe: String) -> Result<Vec<OutlierStock>, String>",
                 "",
                 "#[tauri::command]",
@@ -1293,7 +1423,7 @@
             },
             "validation_and_testing": [
               "Create test cases with known outliers (e.g., stock with P/E 3x sector average)",
-              "Verify Z-score calculations match manual calculations", 
+              "Verify Z-score calculations match manual calculations",
               "Test edge cases: all stocks similar (low std dev), missing data",
               "Performance test: 500 stocks across 11 sectors should complete < 1 second",
               "Validate composite scores make intuitive sense"
@@ -1315,8 +1445,10 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
-          "dependencies": ["US008"],
-          "status": "Not Started",
+          "dependencies": [
+            "US008"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "testing_framework": {
               "rust_testing": "Built-in Rust testing with #[cfg(test)] modules",
@@ -1329,10 +1461,10 @@
             "z_score_testing": {
               "basic_correctness": {
                 "test_cases": [
-                  "Known dataset: mean=10, std_dev=2, value=14 → z=2.0",
-                  "Known dataset: mean=50, std_dev=5, value=40 → z=-2.0", 
-                  "Zero deviation: all values same → z=0.0",
-                  "Negative values: mean=-5, std_dev=3, value=-8 → z=-1.0"
+                  "Known dataset: mean=10, std_dev=2, value=14 \u2192 z=2.0",
+                  "Known dataset: mean=50, std_dev=5, value=40 \u2192 z=-2.0",
+                  "Zero deviation: all values same \u2192 z=0.0",
+                  "Negative values: mean=-5, std_dev=3, value=-8 \u2192 z=-1.0"
                 ],
                 "implementation": [
                   "#[test]",
@@ -1355,24 +1487,24 @@
               }
             },
             "composite_score_testing": {
-              "weighted_rms_formula": "composite = sqrt((w1*z1² + w2*z2² + ... + wn*zn²) / sum_of_weights)",
+              "weighted_rms_formula": "composite = sqrt((w1*z1\u00b2 + w2*z2\u00b2 + ... + wn*zn\u00b2) / sum_of_weights)",
               "test_scenarios": [
                 {
                   "description": "Equal weights, simple values",
                   "input": "z_scores: [1.0, 2.0, -1.0], weights: [1.0, 1.0, 1.0]",
-                  "expected": "sqrt((1² + 4 + 1) / 3) = sqrt(2) ≈ 1.414"
+                  "expected": "sqrt((1\u00b2 + 4 + 1) / 3) = sqrt(2) \u2248 1.414"
                 },
                 {
                   "description": "Weighted scenario matching US008",
                   "input": "pe_z: -2.0 (weight 0.3), pb_z: -1.5 (weight 0.2), price_z: 0.5 (weight 0.3), volume_z: 3.0 (weight 0.2)",
                   "calculation": "sqrt((0.3*4 + 0.2*2.25 + 0.3*0.25 + 0.2*9) / 1.0)",
-                  "expected": "≈ 2.16"
+                  "expected": "\u2248 2.16"
                 },
                 {
                   "description": "Missing data scenario",
                   "input": "pe_z: None, pb_z: -1.0, price_z: 2.0, volume_z: 1.0",
                   "handling": "Only use available metrics, adjust denominator",
-                  "expected": "sqrt((0.2*1 + 0.3*4 + 0.2*1) / 0.7) ≈ 1.96"
+                  "expected": "sqrt((0.2*1 + 0.3*4 + 0.2*1) / 0.7) \u2248 1.96"
                 }
               ],
               "precision_testing": "Verify calculations match manual computation to 0.001 precision"
@@ -1386,27 +1518,27 @@
                 "mixed": "Doesn't fit clear patterns"
               },
               "test_matrix": [
-                "[-2.0, -1.8, 0.2, 0.5] → Undervalued (low P/E, low P/B)",
-                "[2.5, 2.0, -0.5, 0.3] → Overvalued (high P/E, high P/B)", 
-                "[-0.5, 0.2, 2.2, 3.0] → Momentum (high price, high volume)",
-                "[-2.0, 0.5, -1.8, 1.0] → Value Trap (low P/E, poor price)",
-                "[0.5, -0.3, 1.2, -0.8] → Mixed (no clear pattern)"
+                "[-2.0, -1.8, 0.2, 0.5] \u2192 Undervalued (low P/E, low P/B)",
+                "[2.5, 2.0, -0.5, 0.3] \u2192 Overvalued (high P/E, high P/B)",
+                "[-0.5, 0.2, 2.2, 3.0] \u2192 Momentum (high price, high volume)",
+                "[-2.0, 0.5, -1.8, 1.0] \u2192 Value Trap (low P/E, poor price)",
+                "[0.5, -0.3, 1.2, -0.8] \u2192 Mixed (no clear pattern)"
               ]
             },
             "significance_threshold_testing": {
               "threshold_definitions": {
-                "moderate": "1.5σ ≤ composite_score < 2.0σ",
-                "strong": "2.0σ ≤ composite_score < 3.0σ", 
-                "extreme": "composite_score ≥ 3.0σ"
+                "moderate": "1.5\u03c3 \u2264 composite_score < 2.0\u03c3",
+                "strong": "2.0\u03c3 \u2264 composite_score < 3.0\u03c3",
+                "extreme": "composite_score \u2265 3.0\u03c3"
               },
               "boundary_testing": [
-                "composite_score = 1.49 → Below threshold (not outlier)",
-                "composite_score = 1.50 → Moderate outlier",
-                "composite_score = 1.99 → Moderate outlier",
-                "composite_score = 2.00 → Strong outlier",
-                "composite_score = 2.99 → Strong outlier",
-                "composite_score = 3.00 → Extreme outlier",
-                "composite_score = 5.50 → Extreme outlier"
+                "composite_score = 1.49 \u2192 Below threshold (not outlier)",
+                "composite_score = 1.50 \u2192 Moderate outlier",
+                "composite_score = 1.99 \u2192 Moderate outlier",
+                "composite_score = 2.00 \u2192 Strong outlier",
+                "composite_score = 2.99 \u2192 Strong outlier",
+                "composite_score = 3.00 \u2192 Extreme outlier",
+                "composite_score = 5.50 \u2192 Extreme outlier"
               ]
             },
             "property_based_testing": {
@@ -1429,7 +1561,7 @@
             },
             "integration_testing": {
               "full_pipeline_tests": [
-                "Load test market data → calculate sector stats → detect outliers → verify end-to-end",
+                "Load test market data \u2192 calculate sector stats \u2192 detect outliers \u2192 verify end-to-end",
                 "Test with real S&P 500 subset to ensure realistic results",
                 "Performance test: 500 stocks across 11 sectors < 100ms"
               ]
@@ -1476,8 +1608,10 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
-          "dependencies": ["US005"],
-          "status": "Not Started",
+          "dependencies": [
+            "US005"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "testing_framework": {
               "rust_testing": "Built-in Rust testing with #[cfg(test)] modules in stock_discovery.rs",
@@ -1490,17 +1624,17 @@
             "sector_mapping_testing": {
               "mapping_correctness": {
                 "test_cases": [
-                  "\"Information Technology\" → \"XLK\"",
-                  "\"Health Care\" → \"XLV\"", 
-                  "\"Financials\" → \"XLF\"",
-                  "\"Consumer Discretionary\" → \"XLY\"",
-                  "\"Communication Services\" → \"XLC\"",
-                  "\"Industrials\" → \"XLI\"",
-                  "\"Consumer Staples\" → \"XLP\"",
-                  "\"Energy\" → \"XLE\"",
-                  "\"Utilities\" → \"XLU\"",
-                  "\"Real Estate\" → \"XLRE\"",
-                  "\"Materials\" → \"XLB\""
+                  "\"Information Technology\" \u2192 \"XLK\"",
+                  "\"Health Care\" \u2192 \"XLV\"",
+                  "\"Financials\" \u2192 \"XLF\"",
+                  "\"Consumer Discretionary\" \u2192 \"XLY\"",
+                  "\"Communication Services\" \u2192 \"XLC\"",
+                  "\"Industrials\" \u2192 \"XLI\"",
+                  "\"Consumer Staples\" \u2192 \"XLP\"",
+                  "\"Energy\" \u2192 \"XLE\"",
+                  "\"Utilities\" \u2192 \"XLU\"",
+                  "\"Real Estate\" \u2192 \"XLRE\"",
+                  "\"Materials\" \u2192 \"XLB\""
                 ],
                 "implementation_example": [
                   "#[test]",
@@ -1513,14 +1647,14 @@
               },
               "edge_cases": {
                 "case_variations": [
-                  "\"information technology\" → \"XLK\" (lowercase)",
-                  "\"INFORMATION TECHNOLOGY\" → \"XLK\" (uppercase)",
-                  "\"Information  Technology\" → \"XLK\" (extra spaces)"
+                  "\"information technology\" \u2192 \"XLK\" (lowercase)",
+                  "\"INFORMATION TECHNOLOGY\" \u2192 \"XLK\" (uppercase)",
+                  "\"Information  Technology\" \u2192 \"XLK\" (extra spaces)"
                 ],
                 "alternate_names": [
-                  "\"IT\" → \"XLK\" (abbreviation)",
-                  "\"Tech\" → \"XLK\" (common shorthand)",
-                  "\"Healthcare\" → \"XLV\" (one word vs two)"
+                  "\"IT\" \u2192 \"XLK\" (abbreviation)",
+                  "\"Tech\" \u2192 \"XLK\" (common shorthand)",
+                  "\"Healthcare\" \u2192 \"XLV\" (one word vs two)"
                 ],
                 "unmapped_sectors": "Return None for unrecognized sector names"
               }
@@ -1576,7 +1710,7 @@
                 ],
                 "malformed_responses": [
                   "Mock response with invalid HTML",
-                  "Response with no tables found", 
+                  "Response with no tables found",
                   "Response with tables but wrong structure"
                 ]
               },
@@ -1597,19 +1731,19 @@
             },
             "error_handling_testing": {
               "parsing_errors": [
-                "HTML with no tables → return empty Vec",
-                "Tables with missing required columns → skip those rows",
-                "Invalid sector names → map to None, handle gracefully"
+                "HTML with no tables \u2192 return empty Vec",
+                "Tables with missing required columns \u2192 skip those rows",
+                "Invalid sector names \u2192 map to None, handle gracefully"
               ],
               "network_errors": [
-                "HTTP timeout → return appropriate error",
-                "DNS failure → return network error",
-                "Invalid URL → return URL error"
+                "HTTP timeout \u2192 return appropriate error",
+                "DNS failure \u2192 return network error",
+                "Invalid URL \u2192 return URL error"
               ],
               "data_validation": [
-                "Empty stock symbol → skip row", 
-                "Duplicate symbols → handle appropriately",
-                "Invalid characters in symbols → sanitize or skip"
+                "Empty stock symbol \u2192 skip row",
+                "Duplicate symbols \u2192 handle appropriately",
+                "Invalid characters in symbols \u2192 sanitize or skip"
               ]
             },
             "performance_testing": {
@@ -1626,7 +1760,7 @@
             },
             "integration_testing": {
               "end_to_end_pipeline": [
-                "Mock Wikipedia → Parse HTML → Map sectors → Return Stock list",
+                "Mock Wikipedia \u2192 Parse HTML \u2192 Map sectors \u2192 Return Stock list",
                 "Verify integration with database insertion logic",
                 "Test with real Wikipedia structure (sample, not live calls)"
               ]
@@ -1680,8 +1814,10 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 5,
-          "dependencies": ["US007"],
-          "status": "Not Started",
+          "dependencies": [
+            "US007"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "testing_framework": {
               "rust_testing": "Built-in Rust testing with #[cfg(test)] modules in market_data.rs",
@@ -1697,9 +1833,9 @@
                 "quote_endpoint": {
                   "base_url": "https://query1.finance.yahoo.com/v8/finance/chart/",
                   "test_cases": [
-                    "Single symbol: build_quote_url(\"AAPL\") → \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL\"",
-                    "Multiple symbols: build_quote_url([\"AAPL\", \"MSFT\"]) → proper comma-separated format",
-                    "Special characters: build_quote_url(\"BRK.B\") → properly encoded URL"
+                    "Single symbol: build_quote_url(\"AAPL\") \u2192 \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL\"",
+                    "Multiple symbols: build_quote_url([\"AAPL\", \"MSFT\"]) \u2192 proper comma-separated format",
+                    "Special characters: build_quote_url(\"BRK.B\") \u2192 properly encoded URL"
                   ]
                 },
                 "fundamentals_endpoint": {
@@ -1713,8 +1849,8 @@
               },
               "query_parameter_testing": {
                 "parameter_encoding": [
-                  "Symbols with dots: \"BRK.B\" → \"BRK.B\" (no encoding needed)",
-                  "Multiple symbols: [\"AAPL\", \"MSFT\", \"GOOGL\"] → \"AAPL,MSFT,GOOGL\"",
+                  "Symbols with dots: \"BRK.B\" \u2192 \"BRK.B\" (no encoding needed)",
+                  "Multiple symbols: [\"AAPL\", \"MSFT\", \"GOOGL\"] \u2192 \"AAPL,MSFT,GOOGL\"",
                   "Special characters in parameters handled correctly"
                 ],
                 "implementation_example": [
@@ -1767,7 +1903,7 @@
                   "fixture": "fundamentals_aapl.json",
                   "expected_fields": [
                     "trailingPE: 28.5 (P/E ratio)",
-                    "priceToBook: 8.2 (P/B ratio)", 
+                    "priceToBook: 8.2 (P/B ratio)",
                     "beta: 1.21",
                     "dividendYield: 0.0052 (0.52%)",
                     "fiftyTwoWeekHigh: 182.94",
@@ -1784,10 +1920,10 @@
             "error_handling_testing": {
               "malformed_json": {
                 "test_cases": [
-                  "Invalid JSON syntax → return parsing error",
-                  "Valid JSON but wrong structure → return schema error", 
-                  "Missing required fields → return field error",
-                  "Null values in unexpected places → handle gracefully"
+                  "Invalid JSON syntax \u2192 return parsing error",
+                  "Valid JSON but wrong structure \u2192 return schema error",
+                  "Missing required fields \u2192 return field error",
+                  "Null values in unexpected places \u2192 handle gracefully"
                 ],
                 "fixture_examples": [
                   "malformed_syntax.json - Broken JSON syntax",
@@ -1798,7 +1934,7 @@
               "api_error_responses": {
                 "yahoo_error_formats": [
                   "Rate limit exceeded responses",
-                  "Invalid symbol responses", 
+                  "Invalid symbol responses",
                   "Market closed responses",
                   "Service unavailable responses"
                 ],
@@ -1832,7 +1968,7 @@
                 "expected_behavior": "Parse all symbols correctly, maintain order"
               },
               "partial_failures": {
-                "fixture": "quote_mixed_success.json", 
+                "fixture": "quote_mixed_success.json",
                 "scenario": "Some symbols succeed, others fail (invalid symbols)",
                 "expected_behavior": "Return successful parses, log failures"
               }
@@ -1882,7 +2018,7 @@
             },
             "integration_testing": {
               "end_to_end_pipeline": [
-                "URL construction → HTTP request (mocked) → JSON parsing → MarketData struct",
+                "URL construction \u2192 HTTP request (mocked) \u2192 JSON parsing \u2192 MarketData struct",
                 "Verify integration with database insertion logic",
                 "Test error propagation through the entire pipeline"
               ]
@@ -1916,13 +2052,16 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
-          "dependencies": ["US002", "US003"],
-          "status": "Not Started",
+          "dependencies": [
+            "US002",
+            "US003"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "testing_framework": {
               "primary_tools": [
                 "Vitest - Fast unit test runner (integrates with Vite)",
-                "React Testing Library - Component testing utilities", 
+                "React Testing Library - Component testing utilities",
                 "jsdom - DOM environment for testing"
               ],
               "package_dependencies": [
@@ -1949,7 +2088,7 @@
                     "Displays sector name 'Information Technology'",
                     "Shows symbol '(XLK)'",
                     "Renders price change '+2.1%' with appropriate color",
-                    "Shows avg P/E ratio '28.5'", 
+                    "Shows avg P/E ratio '28.5'",
                     "Displays outlier count '8 outliers'"
                   ]
                 },
@@ -1979,7 +2118,7 @@
                   "mock_data": "{ error: 'Failed to load sector data', sector: {...} }",
                   "expected_behavior": [
                     "Shows error message or icon",
-                    "Maintains basic sector info", 
+                    "Maintains basic sector info",
                     "Provides retry mechanism"
                   ]
                 }
@@ -2009,7 +2148,7 @@
                   "mock_data": "Array of 11 sector objects with complete data",
                   "expected_behavior": [
                     "Renders exactly 11 SectorCard components",
-                    "Grid layout responsive (4 cols → 3 → 2 → 1)",
+                    "Grid layout responsive (4 cols \u2192 3 \u2192 2 \u2192 1)",
                     "All sectors display correctly"
                   ]
                 },
@@ -2042,9 +2181,9 @@
               },
               "integration_testing": {
                 "data_flow": [
-                  "SectorGrid receives sector data → passes to SectorCard components",
-                  "Refresh triggers → propagates to all cards",
-                  "Error in one sector → doesn't break entire grid"
+                  "SectorGrid receives sector data \u2192 passes to SectorCard components",
+                  "Refresh triggers \u2192 propagates to all cards",
+                  "Error in one sector \u2192 doesn't break entire grid"
                 ],
                 "tauri_integration": [
                   "Mock Tauri invoke calls for getSectors()",
@@ -2140,7 +2279,7 @@
             "test_organization": {
               "file_structure": [
                 "src/components/__tests__/SectorCard.test.tsx",
-                "src/components/__tests__/SectorGrid.test.tsx", 
+                "src/components/__tests__/SectorGrid.test.tsx",
                 "src/test/setup.ts - Global test configuration",
                 "src/test/fixtures/ - Mock data and utilities"
               ],
@@ -2193,7 +2332,9 @@
           ],
           "complexity": "Large",
           "estimated_hours": 8,
-          "dependencies": ["US009"],
+          "dependencies": [
+            "US009"
+          ],
           "status": "Not Started",
           "implementation_details": {
             "user_experience_design": {
@@ -2208,7 +2349,7 @@
                 "Dedicated route/page (/stock/AAPL) for deep-linking"
               ],
               "navigation_flow": [
-                "User clicks stock in outlier table → Modal opens with loading state",
+                "User clicks stock in outlier table \u2192 Modal opens with loading state",
                 "Fetch detailed data for that specific stock",
                 "Display comprehensive analysis in organized sections",
                 "Allow navigation to other outlier stocks within modal",
@@ -2225,7 +2366,7 @@
                 ],
                 "outlier_status_badge": [
                   "Outlier type (Undervalued, Overvalued, Momentum, Value Trap)",
-                  "Composite outlier score (2.8σ with significance indicator)",
+                  "Composite outlier score (2.8\u03c3 with significance indicator)",
                   "Days as outlier (persistent vs new outlier)",
                   "Outlier strength trend (strengthening/weakening)"
                 ]
@@ -2240,7 +2381,7 @@
                 ],
                 "profitability_metrics": [
                   "Return on Equity (ROE): 147.4%",
-                  "Return on Assets (ROA): 22.1%", 
+                  "Return on Assets (ROA): 22.1%",
                   "Gross Margin: 46.2%",
                   "Operating Margin: 30.1%",
                   "Net Margin: 25.3%"
@@ -2254,27 +2395,27 @@
                 ],
                 "growth_metrics": [
                   "Revenue Growth (TTM): 2.1%",
-                  "Earnings Growth (TTM): 11.2%", 
+                  "Earnings Growth (TTM): 11.2%",
                   "5-Year Revenue CAGR: 8.9%",
                   "5-Year EPS CAGR: 15.2%"
                 ]
               },
               "outlier_analysis_deep_dive": {
                 "z_score_breakdown": [
-                  "P/E Z-Score: -1.2σ (undervalued vs sector by 1.2 standard deviations)",
-                  "P/B Z-Score: +0.8σ (slightly expensive on book value)",
-                  "Price Performance Z-Score: +2.1σ (strong recent outperformance)",
-                  "Volume Z-Score: +3.5σ (unusual trading activity - institutional interest?)"
+                  "P/E Z-Score: -1.2\u03c3 (undervalued vs sector by 1.2 standard deviations)",
+                  "P/B Z-Score: +0.8\u03c3 (slightly expensive on book value)",
+                  "Price Performance Z-Score: +2.1\u03c3 (strong recent outperformance)",
+                  "Volume Z-Score: +3.5\u03c3 (unusual trading activity - institutional interest?)"
                 ],
                 "composite_score_explanation": [
-                  "Overall Composite Score: 2.8σ (Strong Outlier)",
-                  "Calculation: √((1.2² × 0.3) + (0.8² × 0.2) + (2.1² × 0.3) + (3.5² × 0.2))",
+                  "Overall Composite Score: 2.8\u03c3 (Strong Outlier)",
+                  "Calculation: \u221a((1.2\u00b2 \u00d7 0.3) + (0.8\u00b2 \u00d7 0.2) + (2.1\u00b2 \u00d7 0.3) + (3.5\u00b2 \u00d7 0.2))",
                   "Interpretation: Strong statistical anomaly driven primarily by volume and price momentum",
                   "Significance: Top 2% of all stocks in this analysis"
                 ],
                 "outlier_classification_logic": [
                   "Primary Pattern: Momentum Outlier",
-                  "Secondary Pattern: Volume Anomaly", 
+                  "Secondary Pattern: Volume Anomaly",
                   "Key Insight: Strong price performance with unusual institutional activity",
                   "Risk Factor: Valuation still reasonable despite momentum"
                 ]
@@ -2282,7 +2423,7 @@
               "historical_context": {
                 "outlier_timeline": [
                   "First detected as outlier: 12 days ago (2025-01-08)",
-                  "Outlier strength progression: 1.8σ → 2.2σ → 2.8σ (strengthening)",
+                  "Outlier strength progression: 1.8\u03c3 \u2192 2.2\u03c3 \u2192 2.8\u03c3 (strengthening)",
                   "Pattern consistency: Momentum outlier for 8 consecutive days",
                   "Previous outlier periods: Value outlier in Nov 2024 (15 days)"
                 ],
@@ -2302,7 +2443,7 @@
               "sector_competitive_context": {
                 "sector_positioning": [
                   "Rank within Information Technology sector: #3 of 67 stocks by outlier score",
-                  "Sector leaders: NVDA (3.8σ), META (3.1σ), AAPL (2.8σ)",
+                  "Sector leaders: NVDA (3.8\u03c3), META (3.1\u03c3), AAPL (2.8\u03c3)",
                   "Sector performance: Technology +5.2% vs S&P 500 +2.1% (30-day)",
                   "Stock vs Sector: AAPL +8.1% vs XLK +5.2% (outperforming)"
                 ],
@@ -2314,8 +2455,8 @@
                 ],
                 "similar_outlier_stocks": [
                   "Other momentum outliers in different sectors:",
-                  "Healthcare: UNH (2.4σ momentum outlier)",
-                  "Financials: JPM (2.1σ momentum outlier)",
+                  "Healthcare: UNH (2.4\u03c3 momentum outlier)",
+                  "Financials: JPM (2.1\u03c3 momentum outlier)",
                   "Pattern similarity: All showing volume anomalies + price strength"
                 ]
               },
@@ -2350,7 +2491,7 @@
                 "risk_management_considerations": [
                   "Position Size: Consider volatility in position sizing (beta 1.21)",
                   "Stop Loss: Technical support levels at $175 and $165",
-                  "Diversification: Don't overweight single momentum outlier", 
+                  "Diversification: Don't overweight single momentum outlier",
                   "Timeline: Momentum outliers can reverse quickly - have exit plan"
                 ],
                 "further_research_suggestions": [
@@ -2383,7 +2524,7 @@
                 "#[tauri::command]",
                 "pub async fn get_stock_outlier_history(stock_id: i32, days: i32) -> Result<Vec<OutlierHistoryPoint>, String>",
                 "",
-                "#[tauri::command]", 
+                "#[tauri::command]",
                 "pub async fn get_sector_peer_comparison(stock_id: i32, sector_id: i32) -> Result<PeerComparison, String>",
                 "",
                 "#[tauri::command]",
@@ -2411,7 +2552,7 @@
                 "sub_components": [
                   "StockOverviewHeader.tsx - Stock info and outlier badge",
                   "FundamentalAnalysis.tsx - Financial metrics tables",
-                  "OutlierAnalysisChart.tsx - Z-score visualizations", 
+                  "OutlierAnalysisChart.tsx - Z-score visualizations",
                   "HistoricalChart.tsx - Price chart with outlier overlay",
                   "SectorComparison.tsx - Peer analysis table",
                   "InvestmentThesis.tsx - Bull/bear case summary"
@@ -2468,32 +2609,35 @@
           ],
           "complexity": "Large",
           "estimated_hours": 6,
-          "dependencies": ["US008", "US018"],
-          "status": "Not Started",
+          "dependencies": [
+            "US008",
+            "US018"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "comprehensive_outlier_display": {
               "outlier_list_item": {
                 "primary_info": [
                   "Stock symbol (AAPL) + company name (Apple Inc.)",
                   "Sector badge (Technology - XLK)",
-                  "Composite outlier score (2.8σ with color coding)"
+                  "Composite outlier score (2.8\u03c3 with color coding)"
                 ],
                 "detailed_metrics": [
-                  "P/E Z-score: -2.1σ (undervalued vs sector)",
-                  "P/B Z-score: -1.8σ (trading below book value)",
-                  "Price Z-score: +0.5σ (slight outperformance)",
-                  "Volume Z-score: +3.2σ (unusual trading activity)"
+                  "P/E Z-score: -2.1\u03c3 (undervalued vs sector)",
+                  "P/B Z-score: -1.8\u03c3 (trading below book value)",
+                  "Price Z-score: +0.5\u03c3 (slight outperformance)",
+                  "Volume Z-score: +3.2\u03c3 (unusual trading activity)"
                 ],
                 "outlier_classification": {
                   "type": "undervalued",
-                  "confidence": "strong", 
+                  "confidence": "strong",
                   "description": "Significantly undervalued on fundamentals despite recent price strength"
                 },
                 "trend_indicators": [
-                  "↗ New outlier (first detected today)",
-                  "🔥 Persistent outlier (detected 5+ days)",
-                  "📈 Strengthening (outlier score increasing)",
-                  "📉 Weakening (outlier score decreasing)"
+                  "\u2197 New outlier (first detected today)",
+                  "\ud83d\udd25 Persistent outlier (detected 5+ days)",
+                  "\ud83d\udcc8 Strengthening (outlier score increasing)",
+                  "\ud83d\udcc9 Weakening (outlier score decreasing)"
                 ]
               }
             },
@@ -2507,7 +2651,7 @@
               ],
               "filtering_controls": [
                 "Outlier Type: [All] [Undervalued] [Overvalued] [Momentum] [Value Trap]",
-                "Significance: [All] [Moderate 1.5σ+] [Strong 2σ+] [Extreme 3σ+]",
+                "Significance: [All] [Moderate 1.5\u03c3+] [Strong 2\u03c3+] [Extreme 3\u03c3+]",
                 "Sector: [All] [Technology] [Healthcare] etc.",
                 "Trend: [All] [New] [Persistent] [Strengthening] [Weakening]"
               ],
@@ -2529,7 +2673,7 @@
                 "historical_trends": [
                   "7-day outlier score chart (from outlier_detections table)",
                   "Persistence indicator: 'Has been undervalued outlier for 12 days'",
-                  "Score evolution: 'Outlier strength increasing from 2.1σ to 2.8σ'"
+                  "Score evolution: 'Outlier strength increasing from 2.1\u03c3 to 2.8\u03c3'"
                 ],
                 "sector_context": [
                   "How this stock compares to sector averages",
@@ -2548,7 +2692,7 @@
                 "item_height": "120px each for comprehensive information",
                 "responsive_columns": [
                   "Stock info (symbol, name, sector) - 25%",
-                  "Composite score with visual indicator - 15%", 
+                  "Composite score with visual indicator - 15%",
                   "Individual Z-scores grid - 35%",
                   "Classification & trends - 25%"
                 ],
@@ -2560,15 +2704,15 @@
                 }
               },
               "significance_indicators": [
-                "1.5σ - 2σ: Orange dot (moderate)",
-                "2σ - 3σ: Red dot (strong)", 
-                "3σ+: Red exclamation mark (extreme)"
+                "1.5\u03c3 - 2\u03c3: Orange dot (moderate)",
+                "2\u03c3 - 3\u03c3: Red dot (strong)",
+                "3\u03c3+: Red exclamation mark (extreme)"
               ],
               "trend_icons": [
-                "New: ✨ sparkle icon",
-                "Persistent: 🔥 fire icon",
-                "Strengthening: 📈 chart up",
-                "Weakening: 📉 chart down"
+                "New: \u2728 sparkle icon",
+                "Persistent: \ud83d\udd25 fire icon",
+                "Strengthening: \ud83d\udcc8 chart up",
+                "Weakening: \ud83d\udcc9 chart down"
               ]
             },
             "data_integration": {
@@ -2585,7 +2729,7 @@
               "react_data_structures": [
                 "interface OutlierSummary {",
                 "  stock: Stock;",
-                "  sector: Sector;", 
+                "  sector: Sector;",
                 "  composite_score: number;",
                 "  z_scores: ZScores;",
                 "  outlier_type: OutlierType;",
@@ -2630,14 +2774,16 @@
           "title": "As a user, I want configurable outlier thresholds",
           "description": "Allow users to adjust sensitivity of outlier detection",
           "acceptance_criteria": [
-            "Settings panel with threshold slider (1.0σ - 3.0σ)",
+            "Settings panel with threshold slider (1.0\u03c3 - 3.0\u03c3)",
             "Outlier detection updates in real-time as threshold changes",
             "Settings persist between app sessions",
             "Visual feedback shows how many outliers at each threshold"
           ],
           "complexity": "Medium",
           "estimated_hours": 5,
-          "dependencies": ["US009"],
+          "dependencies": [
+            "US009"
+          ],
           "status": "Not Started"
         },
         {
@@ -2646,15 +2792,17 @@
           "description": "Detect outliers based on volume, P/E ratio, market cap, not just price",
           "acceptance_criteria": [
             "Volume outlier detection",
-            "P/E ratio outlier detection", 
+            "P/E ratio outlier detection",
             "Market cap outlier detection",
             "User can select which metrics to analyze",
             "Combined outlier score across multiple metrics"
           ],
           "complexity": "Large",
           "estimated_hours": 8,
-          "dependencies": ["US010"],
-          "status": "Not Started"
+          "dependencies": [
+            "US010"
+          ],
+          "status": "Completed"
         },
         {
           "id": "US012",
@@ -2668,7 +2816,9 @@
           ],
           "complexity": "Large",
           "estimated_hours": 10,
-          "dependencies": ["US011"],
+          "dependencies": [
+            "US011"
+          ],
           "status": "Not Started"
         },
         {
@@ -2679,15 +2829,18 @@
             "Toggle between S&P 500 (large-cap) and Russell 2000 (small-cap) analysis modes",
             "Fetch Russell 2000 constituents from iShares IWM ETF holdings",
             "Apply small-cap-specific outlier detection with adjusted thresholds",
-            "Handle higher volatility and frequent missing P/E ratios appropriately", 
+            "Handle higher volatility and frequent missing P/E ratios appropriately",
             "Display small-cap vs large-cap comparative analysis",
             "Show liquidity-adjusted metrics (volume relative to float)",
             "Separate sector distributions for small-cap vs large-cap"
           ],
-          "complexity": "Large", 
+          "complexity": "Large",
           "estimated_hours": 10,
-          "dependencies": ["US008", "US009"],
-          "status": "Not Started",
+          "dependencies": [
+            "US008",
+            "US009"
+          ],
+          "status": "Completed",
           "implementation_details": {
             "small_cap_characteristics": {
               "key_differences": [
@@ -2699,8 +2852,8 @@
                 "Less analyst coverage - fewer professional estimates and research"
               ],
               "adjusted_analysis_approach": [
-                "Use higher Z-score thresholds (2.0σ vs 1.5σ for large-caps)",
-                "Focus on P/B, P/S ratios when P/E unavailable", 
+                "Use higher Z-score thresholds (2.0\u03c3 vs 1.5\u03c3 for large-caps)",
+                "Focus on P/B, P/S ratios when P/E unavailable",
                 "Emphasize volume and liquidity anomalies",
                 "Consider revenue growth rates over earnings",
                 "Weight volatility metrics more heavily"
@@ -2720,20 +2873,40 @@
                   {
                     "source": "Barchart.com IWM constituents",
                     "url": "https://www.barchart.com/etfs-funds/quotes/IWM/constituents",
-                    "features": ["CSV download available", "Real-time data", "Holdings percentages"],
-                    "limitations": ["Requires free account", "1 download/day limit", "5000 records max"]
+                    "features": [
+                      "CSV download available",
+                      "Real-time data",
+                      "Holdings percentages"
+                    ],
+                    "limitations": [
+                      "Requires free account",
+                      "1 download/day limit",
+                      "5000 records max"
+                    ]
                   },
                   {
                     "source": "FTSE Russell official spreadsheets",
                     "url": "https://www.lseg.com/en/ftse-russell/index-resources/constituent-weights",
-                    "features": ["Most authoritative source", "Excel with weights"],
-                    "limitations": ["2-month delay after reviews", "Quarterly updates only"]
+                    "features": [
+                      "Most authoritative source",
+                      "Excel with weights"
+                    ],
+                    "limitations": [
+                      "2-month delay after reviews",
+                      "Quarterly updates only"
+                    ]
                   },
                   {
                     "source": "GitHub community repo",
                     "url": "https://github.com/ikoniaris/Russell2000/blob/master/russell_2000_components.csv",
-                    "features": ["Direct CSV access", "Simple HTTP download"],
-                    "limitations": ["Uncertain update frequency", "Community-maintained"]
+                    "features": [
+                      "Direct CSV access",
+                      "Simple HTTP download"
+                    ],
+                    "limitations": [
+                      "Uncertain update frequency",
+                      "Community-maintained"
+                    ]
                   }
                 ],
                 "data_format": "Excel/CSV with Symbol, Company Name, Sector, P/E Ratio, Market Cap, Dividend Yield",
@@ -2751,7 +2924,7 @@
                   "-- Migration: Add Russell 2000 universe support",
                   "CREATE TABLE stock_universe (",
                   "  id INTEGER PRIMARY KEY,",
-                  "  stock_id INTEGER NOT NULL REFERENCES stocks(id),", 
+                  "  stock_id INTEGER NOT NULL REFERENCES stocks(id),",
                   "  universe_type TEXT NOT NULL CHECK (universe_type IN ('sp500', 'russell2000')),",
                   "  date_added DATE NOT NULL DEFAULT CURRENT_DATE,",
                   "  date_removed DATE, -- NULL if still active",
@@ -2788,7 +2961,7 @@
                       "1. Fetch Russell 2000 list from SureDividend.com",
                       "2. For each Russell 2000 stock:",
                       "   - Check if stock exists in stocks table",
-                      "   - If exists: INSERT INTO stock_universe (stock_id, 'russell2000')", 
+                      "   - If exists: INSERT INTO stock_universe (stock_id, 'russell2000')",
                       "   - If not exists: INSERT INTO stocks, then INSERT INTO stock_universe",
                       "3. Map sectors using same logic as S&P 500 sector mapping",
                       "4. Handle missing sectors by assigning sector_id = NULL initially"
@@ -2808,7 +2981,7 @@
                       "SELECT s.*, su.universe_type, se.name as sector_name",
                       "FROM stocks s",
                       "JOIN stock_universe su ON s.id = su.stock_id",
-                      "LEFT JOIN sectors se ON s.sector_id = se.id", 
+                      "LEFT JOIN sectors se ON s.sector_id = se.id",
                       "WHERE su.universe_type = ? AND su.date_removed IS NULL;"
                     ],
                     "outlier_detection_filtering": [
@@ -2832,7 +3005,7 @@
                     "#[tauri::command]",
                     "pub async fn get_stocks_by_universe(universe: String) -> Result<Vec<Stock>, String>",
                     "",
-                    "#[tauri::command]", 
+                    "#[tauri::command]",
                     "pub async fn get_outliers_by_universe(universe: String) -> Result<Vec<OutlierStock>, String>",
                     "",
                     "#[tauri::command]",
@@ -2848,18 +3021,18 @@
             },
             "tailored_outlier_detection": {
               "small_cap_thresholds": {
-                "volatility_adjustment": "Use 2.0σ threshold vs 1.5σ for large-caps",
+                "volatility_adjustment": "Use 2.0\u03c3 threshold vs 1.5\u03c3 for large-caps",
                 "sector_specific": {
-                  "technology": "2.5σ (higher volatility in small-cap tech)",
-                  "healthcare": "2.2σ (biotech volatility)", 
-                  "financials": "1.8σ (regional banks more stable)",
-                  "energy": "3.0σ (exploration companies very volatile)"
+                  "technology": "2.5\u03c3 (higher volatility in small-cap tech)",
+                  "healthcare": "2.2\u03c3 (biotech volatility)",
+                  "financials": "1.8\u03c3 (regional banks more stable)",
+                  "energy": "3.0\u03c3 (exploration companies very volatile)"
                 }
               },
               "alternative_metrics": {
                 "when_pe_unavailable": [
                   "Price-to-Sales (P/S) ratio analysis",
-                  "Price-to-Book (P/B) remains important",  
+                  "Price-to-Book (P/B) remains important",
                   "Revenue growth rate outliers",
                   "Enterprise Value to Revenue (EV/R)"
                 ],
@@ -2957,7 +3130,7 @@
                 ]
               },
               "error_handling_strategy": [
-                "Graceful cascading fallback: SureDividend → Barchart → FTSE Russell → GitHub repo",
+                "Graceful cascading fallback: SureDividend \u2192 Barchart \u2192 FTSE Russell \u2192 GitHub repo",
                 "Cache last successful Russell 2000 list for offline usage",
                 "User notification when data is stale (>30 days old)",
                 "Retry mechanism with exponential backoff for network failures",
@@ -2991,7 +3164,7 @@
                 ],
                 "memory_usage_targets": [
                   "S&P 500 mode: < 50MB memory usage",
-                  "Russell 2000 mode: < 150MB memory usage", 
+                  "Russell 2000 mode: < 150MB memory usage",
                   "Universe switching: < 20MB additional overhead",
                   "No memory leaks during repeated universe switches"
                 ],
@@ -3009,7 +3182,7 @@
                   "size": "50 representative Russell 2000 stocks for fast testing",
                   "composition": [
                     "10 Technology stocks (high P/E, growth-oriented)",
-                    "8 Healthcare stocks (mix of profitable and unprofitable biotech)", 
+                    "8 Healthcare stocks (mix of profitable and unprofitable biotech)",
                     "8 Financial stocks (regional banks, lower volatility)",
                     "6 Industrial stocks (manufacturing, moderate P/E)",
                     "5 Consumer Discretionary stocks (retail, cyclical)",
@@ -3021,7 +3194,7 @@
                   ],
                   "characteristics_simulation": [
                     "30% have missing P/E ratios (represent unprofitable small-caps)",
-                    "Average market cap: $1-5 billion (true small-cap range)", 
+                    "Average market cap: $1-5 billion (true small-cap range)",
                     "Higher volatility: 2-3x price swings vs large-caps",
                     "Include penny stocks ($1-10 range) and micro-caps",
                     "Mix of dividend-paying and growth-focused stocks"
@@ -3048,9 +3221,9 @@
                 ],
                 "testing_scenarios": [
                   "Full Russell 2000 outlier detection with 50-stock subset",
-                  "Performance comparison: 50 stocks vs 500 stocks vs 2000 stocks", 
+                  "Performance comparison: 50 stocks vs 500 stocks vs 2000 stocks",
                   "Missing data handling: 30% missing P/E ratios",
-                  "Small-cap volatility: Higher Z-score thresholds (2.0σ vs 1.5σ)",
+                  "Small-cap volatility: Higher Z-score thresholds (2.0\u03c3 vs 1.5\u03c3)",
                   "Sector distribution: Verify small-cap vs large-cap differences"
                 ]
               },
@@ -3064,11 +3237,11 @@
                 "rust_benchmark_tests": [
                   "#[bench]",
                   "fn bench_outlier_detection_sp500_baseline() {",
-                  "    let stocks = load_mock_sp500_subset();", 
+                  "    let stocks = load_mock_sp500_subset();",
                   "    bench_iter(|| detect_outliers_by_universe(&stocks, \"sp500\"));",
                   "}",
                   "",
-                  "#[bench]", 
+                  "#[bench]",
                   "fn bench_outlier_detection_russell2000_full() {",
                   "    let stocks = load_mock_russell_2000_full();",
                   "    bench_iter(|| detect_outliers_by_universe(&stocks, \"russell2000\"));",
@@ -3090,7 +3263,7 @@
                 ],
                 "mock_tauri_commands": [
                   "Mock get_sectors_by_universe with different datasets",
-                  "Mock detect_outliers_by_universe with universe-specific results", 
+                  "Mock detect_outliers_by_universe with universe-specific results",
                   "Mock refresh_universe_data with appropriate delays",
                   "Simulate network errors and data loading failures"
                 ],
@@ -3129,12 +3302,12 @@
               "SectorGrid.tsx re-renders with correct universe data when toggle changes",
               "useDatabase hook universe-aware functions work correctly (getSectors, getOutliers)",
               "Tauri commands get_sectors_by_universe and detect_outliers_by_universe return correct data",
-              "Small-cap outlier detection uses appropriate higher thresholds (2.0σ vs 1.5σ)",
+              "Small-cap outlier detection uses appropriate higher thresholds (2.0\u03c3 vs 1.5\u03c3)",
               "Missing P/E ratios handled gracefully (30-40% of small-caps lack P/E)",
               "Alternative metrics (P/S, P/B) work when P/E unavailable",
               "Comparative analysis shows meaningful differences between universes",
               "Performance remains acceptable with 4x more stocks (~2000 vs ~500)",
-              "Data validation catches invalid symbols and missing critical fields", 
+              "Data validation catches invalid symbols and missing critical fields",
               "Sector distributions reflect small-cap vs large-cap characteristics",
               "UI clearly distinguishes between small-cap and large-cap analysis modes",
               "Cache mechanism works for offline usage when data sources unavailable",
@@ -3144,12 +3317,12 @@
             ],
             "integration_testing_checklist": {
               "end_to_end_universe_flow": [
-                "1. Start app → defaults to S&P 500 universe → shows ~500 stocks in 11 sectors",
-                "2. Click Russell 2000 toggle → UI updates → shows ~2000 stocks in 11 sectors",
-                "3. Outlier detection runs → returns different outliers for each universe",
+                "1. Start app \u2192 defaults to S&P 500 universe \u2192 shows ~500 stocks in 11 sectors",
+                "2. Click Russell 2000 toggle \u2192 UI updates \u2192 shows ~2000 stocks in 11 sectors",
+                "3. Outlier detection runs \u2192 returns different outliers for each universe",
                 "4. Sector cards show different metrics (small-cap vs large-cap characteristics)",
-                "5. Refresh button works → updates data for current universe only",
-                "6. Switch back to S&P 500 → returns to original state → no data loss"
+                "5. Refresh button works \u2192 updates data for current universe only",
+                "6. Switch back to S&P 500 \u2192 returns to original state \u2192 no data loss"
               ],
               "database_integration_verification": [
                 "Universe queries return correct stock counts (S&P 500: ~500, Russell 2000: ~2000)",
@@ -3172,7 +3345,7 @@
     },
     "epic_5_polish": {
       "title": "User Experience & Polish",
-      "priority": "P2", 
+      "priority": "P2",
       "stories": [
         {
           "id": "US013",
@@ -3187,13 +3360,15 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 6,
-          "dependencies": ["US009"],
-          "status": "Not Started"
+          "dependencies": [
+            "US009"
+          ],
+          "status": "Completed"
         },
         {
           "id": "US014",
           "title": "As a user, I want to export outlier data",
-          "description": "Export current outliers to CSV or JSON for further analysis", 
+          "description": "Export current outliers to CSV or JSON for further analysis",
           "acceptance_criteria": [
             "Export button in toolbar",
             "CSV format with all outlier details",
@@ -3203,7 +3378,9 @@
           ],
           "complexity": "Small",
           "estimated_hours": 3,
-          "dependencies": ["US013"],
+          "dependencies": [
+            "US013"
+          ],
           "status": "Not Started"
         },
         {
@@ -3219,7 +3396,9 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 4,
-          "dependencies": ["US013"],
+          "dependencies": [
+            "US013"
+          ],
           "status": "Not Started"
         },
         {
@@ -3236,7 +3415,9 @@
           ],
           "complexity": "Medium",
           "estimated_hours": 5,
-          "dependencies": ["US008"],
+          "dependencies": [
+            "US008"
+          ],
           "status": "Not Started",
           "implementation_details": {
             "data_lifecycle_strategy": {
@@ -3261,7 +3442,7 @@
                 ],
                 "retention_settings": [
                   "Data retention period: [30d] [90d] [1yr] [Unlimited]",
-                  "Auto-cleanup enabled: [✓]",
+                  "Auto-cleanup enabled: [\u2713]",
                   "Cleanup frequency: [Daily] [Weekly] [Monthly]"
                 ],
                 "manual_controls": [
@@ -3272,14 +3453,14 @@
               }
             },
             "smart_cleanup_logic": {
-              "preserve_significant_outliers": "Keep records of extreme outliers (3σ+) longer than moderate ones",
+              "preserve_significant_outliers": "Keep records of extreme outliers (3\u03c3+) longer than moderate ones",
               "summarization_before_delete": [
                 "Create monthly summary: sector, avg_outlier_count, strongest_outlier_score",
                 "Store trend data: outlier_counts_over_time for charts"
               ],
               "gradual_degradation": [
                 "0-30 days: Keep all detailed records",
-                "30-90 days: Keep daily summaries", 
+                "30-90 days: Keep daily summaries",
                 "90d-1yr: Keep weekly summaries",
                 "1yr+: Keep monthly summaries only"
               ]
@@ -3291,7 +3472,7 @@
             },
             "export_before_cleanup": {
               "csv_export": "Export outlier history to CSV before deletion",
-              "json_export": "Export full data structure for backup/analysis", 
+              "json_export": "Export full data structure for backup/analysis",
               "selective_export": "User can choose date ranges and specific stocks"
             },
             "validation_steps": [
@@ -3319,29 +3500,39 @@
         "complexity": "Small",
         "estimated_hours": 1,
         "dependencies": [],
-        "related_stories": ["US001"],
+        "related_stories": [
+          "US001"
+        ],
         "status": "Not Started"
       },
       {
-        "id": "TECH002", 
+        "id": "TECH002",
         "title": "Configure TypeScript and build tools",
         "description": "Setup TS, linting, formatting, build pipeline",
         "priority": "P0",
         "complexity": "Small",
         "estimated_hours": 2,
-        "dependencies": ["TECH001"],
-        "related_stories": ["US001"],
+        "dependencies": [
+          "TECH001"
+        ],
+        "related_stories": [
+          "US001"
+        ],
         "status": "Not Started"
       },
       {
         "id": "TECH003",
         "title": "Setup SQLite with migrations",
         "description": "Database initialization and schema management",
-        "priority": "P0", 
+        "priority": "P0",
         "complexity": "Medium",
         "estimated_hours": 3,
-        "dependencies": ["TECH001"],
-        "related_stories": ["US004"],
+        "dependencies": [
+          "TECH001"
+        ],
+        "related_stories": [
+          "US004"
+        ],
         "status": "Not Started"
       }
     ],
@@ -3353,8 +3544,12 @@
         "priority": "P1",
         "complexity": "Large",
         "estimated_hours": 5,
-        "dependencies": ["TECH003"],
-        "related_stories": ["US007"],
+        "dependencies": [
+          "TECH003"
+        ],
+        "related_stories": [
+          "US007"
+        ],
         "status": "Not Started"
       },
       {
@@ -3362,10 +3557,15 @@
         "title": "Statistical analysis module",
         "description": "Outlier detection algorithms in Rust",
         "priority": "P1",
-        "complexity": "Large", 
+        "complexity": "Large",
         "estimated_hours": 6,
-        "dependencies": ["TECH004"],
-        "related_stories": ["US008", "US011"],
+        "dependencies": [
+          "TECH004"
+        ],
+        "related_stories": [
+          "US008",
+          "US011"
+        ],
         "status": "Not Started"
       },
       {
@@ -3375,8 +3575,12 @@
         "priority": "P1",
         "complexity": "Medium",
         "estimated_hours": 4,
-        "dependencies": ["TECH004"],
-        "related_stories": ["US012"],
+        "dependencies": [
+          "TECH004"
+        ],
+        "related_stories": [
+          "US012"
+        ],
         "status": "Not Started"
       }
     ]
@@ -3386,35 +3590,62 @@
       "name": "MVP Demo",
       "target_date": "2025-02-15",
       "description": "Basic app with sector grid and mock data",
-      "required_stories": ["US001", "US002", "US003"],
+      "required_stories": [
+        "US001",
+        "US002",
+        "US003"
+      ],
       "status": "Planned"
     },
     {
       "name": "Alpha Release",
-      "target_date": "2025-03-01", 
+      "target_date": "2025-03-01",
       "description": "Working outlier detection with real data",
-      "required_stories": ["US004", "US005", "US006", "US007", "US008", "US018", "US019", "US020", "US021", "US009"],
+      "required_stories": [
+        "US004",
+        "US005",
+        "US006",
+        "US007",
+        "US008",
+        "US018",
+        "US019",
+        "US020",
+        "US021",
+        "US009"
+      ],
       "status": "Planned"
     },
     {
       "name": "Beta Release",
       "target_date": "2025-03-15",
       "description": "Advanced features and polish",
-      "required_stories": ["US010", "US011", "US013", "US014", "US022"],
+      "required_stories": [
+        "US010",
+        "US011",
+        "US013",
+        "US014",
+        "US022"
+      ],
       "status": "Planned"
     },
     {
-      "name": "Portfolio Ready", 
+      "name": "Portfolio Ready",
       "target_date": "2025-03-30",
       "description": "Production-ready app for job applications",
-      "required_stories": ["US012", "US015", "US016"],
+      "required_stories": [
+        "US012",
+        "US015",
+        "US016"
+      ],
       "status": "Planned"
     },
     {
       "name": "Multi-Universe Platform",
-      "target_date": "2025-04-15", 
+      "target_date": "2025-04-15",
       "description": "Comprehensive large-cap and small-cap analysis platform",
-      "required_stories": ["US017"],
+      "required_stories": [
+        "US017"
+      ],
       "status": "Future Enhancement"
     }
   ],
@@ -3425,7 +3656,7 @@
       "current": "N/A"
     },
     {
-      "metric": "Data Refresh Speed", 
+      "metric": "Data Refresh Speed",
       "target": "< 10 seconds",
       "current": "N/A"
     },
@@ -3436,7 +3667,7 @@
     },
     {
       "metric": "Bundle Size",
-      "target": "< 15MB", 
+      "target": "< 15MB",
       "current": "N/A"
     }
   ],
@@ -3449,14 +3680,14 @@
     },
     {
       "risk": "Market Data Quality",
-      "impact": "Medium", 
+      "impact": "Medium",
       "probability": "Low",
       "mitigation": "Data validation, multiple sources, graceful degradation"
     },
     {
       "risk": "Cross-platform Compatibility",
       "impact": "Low",
-      "probability": "Low", 
+      "probability": "Low",
       "mitigation": "Focus on macOS first, Tauri handles most cross-platform issues"
     },
     {

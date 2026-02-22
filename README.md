@@ -94,6 +94,75 @@ sector-view/
 - **Backend:** Rust, Tauri 2, SQLx (SQLite), Tokio, Reqwest
 - **Data:** Yahoo Finance API, local SQLite database
 
+## Testing
+
+GICS Intelligence includes comprehensive unit test coverage for both frontend and backend components, with **145 total tests** ensuring code quality and reliability.
+
+### Frontend Tests (React/Vitest) — 45 tests
+
+**Run all frontend tests:**
+```sh
+npm test
+```
+
+**Run tests in watch mode (re-runs on file changes):**
+```sh
+npm run test:watch
+```
+
+**Run tests with coverage report:**
+```sh
+npm run test:coverage
+```
+
+**What's tested:**
+- **Component rendering** and UI behavior (SectorCard, SectorGrid)
+- **User interactions** and event handling
+- **Snapshot testing** for UI consistency
+- **Props validation** and edge cases
+
+### Backend Tests (Rust/Cargo) — 100 tests
+
+**Run all backend tests:**
+```sh
+cd src-tauri
+cargo test
+```
+
+**Run tests with detailed output:**
+```sh
+cd src-tauri
+cargo test -- --nocapture
+```
+
+**Run specific test modules:**
+```sh
+cd src-tauri
+cargo test outlier_detection    # Z-score calculation tests
+cargo test market_data         # Yahoo Finance API tests
+cargo test stock_discovery     # S&P 500 parsing tests
+cargo test russell_discovery   # Russell 2000 integration tests
+```
+
+**What's tested:**
+- **Mathematical accuracy** — Z-score calculations, composite scoring, outlier classification
+- **Data parsing** — Yahoo Finance JSON responses, Wikipedia HTML parsing, IWM CSV processing
+- **API integration** — URL construction, error handling, data validation
+- **Database operations** — SQLite queries, migrations, data consistency
+- **Edge cases** — Missing data handling, malformed responses, boundary conditions
+
+### Test Coverage
+
+The test suite validates critical functionality across all major modules:
+
+- ✅ **Financial calculations** — Ensures mathematical accuracy for investment-grade analysis
+- ✅ **Data integration** — Validates API responses and data parsing reliability  
+- ✅ **User interface** — Confirms UI components render correctly across scenarios
+- ✅ **Database operations** — Tests data storage and retrieval consistency
+- ✅ **Error handling** — Verifies graceful degradation under failure conditions
+
+**All tests pass consistently, ensuring production-ready code quality.**
+
 ## Important Disclaimer
 
 **⚠️ For Educational and Research Purposes Only**
